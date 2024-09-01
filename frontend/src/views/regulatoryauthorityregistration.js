@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import useUserRole from '../hooks/useuserrole'; // Adjust the path as necessary
-import { uploadToIPFS } from '../utils/ipfsutils'; // Adjust import path as needed
-import { initWeb3, initContract } from '../utils/web3utils'; // Adjust import path as needed
+import useUserRole from '../hooks/useuserrole'; 
+import { uploadToIPFS } from '../utils/ipfsutils'; 
+import { initWeb3, initContracts } from '../utils/web3utils'; 
 
 const RegulatoryAuthorityRegistration = () => {
     const [formState, setFormState] = useState({
@@ -47,12 +47,12 @@ const RegulatoryAuthorityRegistration = () => {
             const ipfsHash = await uploadToIPFS(data);
 
             const web3 = await initWeb3();
-            const contract = await initContract(web3);
+            const { registrationContract } = await initContracts(web3);
 
             const accounts = await web3.eth.getAccounts();
             const userAddress = accounts[0];
 
-            await contract.methods.registerRegulatoryAuthority(address, ipfsHash).send({ from: userAddress });
+            await registrationContract.methods.registerRegulatoryAuthority(address, ipfsHash).send({ from: userAddress });
 
             setSuccess('Regulatory authority registered successfully!');
         } catch (err) {

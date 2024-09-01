@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { uploadToIPFS } from '../utils/ipfsutils'; 
-import { initWeb3, initContract } from '../utils/web3utils'; 
+import { initWeb3, initContracts } from '../utils/web3utils'; 
 import useUserRole from '../hooks/useuserrole'; 
 
 const PharmacyRegistration = () => {
@@ -47,12 +47,12 @@ const PharmacyRegistration = () => {
             const ipfsHash = await uploadToIPFS(data);
 
             const web3 = await initWeb3();
-            const contract = await initContract(web3);
+            const { registrationContract } = await initContracts(web3); // Use initContracts here
 
             const accounts = await web3.eth.getAccounts();
             const userAddress = accounts[0];
 
-            await contract.methods.PharmacyRegistration(address, ipfsHash).send({ from: userAddress });
+            await registrationContract.methods.PharmacyRegistration(address, ipfsHash).send({ from: userAddress });
 
             setSuccess('Pharmacy registered successfully!');
         } catch (err) {

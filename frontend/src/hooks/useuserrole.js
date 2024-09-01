@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { initWeb3, initContract } from '../utils/web3utils'; 
+import { initWeb3, initContracts } from '../utils/web3utils'; 
 
 const useUserRole = () => {
     const [role, setRole] = useState(null);
@@ -20,15 +20,15 @@ const useUserRole = () => {
 
             // Initialize web3 and contract
             const web3 = await initWeb3();
-            const contract = await initContract(web3);
+            const { registrationContract } = await initContracts(web3);
 
             // Fetch roles from the contract
-            const adminAddress = await contract.methods.administrator().call();
+            const adminAddress = await registrationContract.methods.administrator().call();
             const isAdministrator = adminAddress.toLowerCase() === userAddress.toLowerCase();
-            const isPhysician = await contract.methods.Physician(userAddress).call();
-            const isPatient = await contract.methods.Patient(userAddress).call();
-            const isPharmacy = await contract.methods.Pharmacy(userAddress).call();
-            const isRegulatoryAuthority = await contract.methods.isRegulatoryAuthority(userAddress).call();
+            const isPhysician = await registrationContract.methods.Physician(userAddress).call();
+            const isPatient = await registrationContract.methods.Patient(userAddress).call();
+            const isPharmacy = await registrationContract.methods.Pharmacy(userAddress).call();
+            const isRegulatoryAuthority = await registrationContract.methods.isRegulatoryAuthority(userAddress).call();
 
             if (isAdministrator) {
                 setRole('Administrator');
@@ -90,7 +90,7 @@ const useUserRole = () => {
                 window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
             }
         };
-    }, []); // Empty dependency array means this effect runs once on mount
+    }, []);
 
     return { role, loading, error, ethereumAvailable };
 };

@@ -1,9 +1,8 @@
-// src/views/QueryPage.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useUserRole from '../hooks/useuserrole'; 
 import { downloadFromIPFS } from '../utils/ipfsutils'; 
-import { initWeb3, initContract } from '../utils/web3utils'; 
+import { initWeb3, initContracts } from '../utils/web3utils'; 
 
 const QueryPage = () => {
     const [address, setAddress] = useState('');
@@ -39,15 +38,15 @@ const QueryPage = () => {
 
         try {
             const web3 = await initWeb3();
-            const contract = await initContract(web3);
+            const {registrationContract} = await initContracts(web3);
 
             // Fetch role
-            const isAdministrator = await contract.methods.administrator().call();
+            const isAdministrator = await registrationContract.methods.administrator().call();
             const isAdmin = isAdministrator.toLowerCase() === address.toLowerCase();
-            const isPhysician = await contract.methods.Physician(address).call();
-            const isPatient = await contract.methods.Patient(address).call();
-            const isPharmacy = await contract.methods.Pharmacy(address).call();
-            const isRegulatoryAuthority = await contract.methods.isRegulatoryAuthority(address).call();
+            const isPhysician = await registrationContract.methods.Physician(address).call();
+            const isPatient = await registrationContract.methods.Patient(address).call();
+            const isPharmacy = await registrationContract.methods.Pharmacy(address).call();
+            const isRegulatoryAuthority = await registrationContract.methods.isRegulatoryAuthority(address).call();
 
             if (isAdmin) {
                 setRole('Administrator');
@@ -66,16 +65,16 @@ const QueryPage = () => {
             // Fetch attributes from IPFS
             let attributes = {};
             if (isPhysician) {
-                const ipfsHash = await contract.methods.physicianIPFSHash(address).call();
+                const ipfsHash = await registrationContract.methods.physicianIPFSHash(address).call();
                 attributes = await downloadFromIPFS(ipfsHash);
             } else if (isPatient) {
-                const ipfsHash = await contract.methods.patientIPFSHash(address).call();
+                const ipfsHash = await registrationContract.methods.patientIPFSHash(address).call();
                 attributes = await downloadFromIPFS(ipfsHash);
             } else if (isPharmacy) {
-                const ipfsHash = await contract.methods.pharmacyIPFSHash(address).call();
+                const ipfsHash = await registrationContract.methods.pharmacyIPFSHash(address).call();
                 attributes = await downloadFromIPFS(ipfsHash);
             } else if (isRegulatoryAuthority) {
-                const ipfsHash = await contract.methods.regulatoryAuthorityIPFSHash(address).call();
+                const ipfsHash = await registrationContract.methods.regulatoryAuthorityIPFSHash(address).call();
                 attributes = await downloadFromIPFS(ipfsHash);
             }
             setAttributes(attributes);

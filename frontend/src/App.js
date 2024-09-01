@@ -12,11 +12,18 @@ import RedirectToHome from './views/redirecttohome';
 import QueryPage from './views/querypage';
 import ConfigPage from './components/configpage';
 
+// Component to handle errors
+const ErrorBoundary = ({ error, children }) => {
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+  return children;
+};
+
 function App() {
   const { role, loading, error, ethereumAvailable } = useUserRole();
 
   if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
 
   return (
     <Router>
@@ -29,23 +36,32 @@ function App() {
         )}
         <Navbar role={role} />
         <Routes>
-          <Route path="/" element={<Home />} />
-          {role === 'Administrator' && (
-            <>
-              <Route path="/register-regulatory-authority" element={<RegulatoryAuthorityRegistration />} />
-              <Route path="/query-page" element={<QueryPage />} />
-            </>
-          )}
-          {role === 'Regulatory Authority' && (
-            <>
-              <Route path="/register-physician" element={<PhysicianRegistration />} />
-              <Route path="/register-pharmacy" element={<PharmacyRegistration />} />
-              <Route path="/register-patient" element={<PatientRegistration />} />
-              <Route path="/query-page" element={<QueryPage />} />
-            </>
-          )}
-          <Route path='/config' element={<ConfigPage />} />
-          <Route path="*" element={<RedirectToHome />} /> 
+          <Route path="/config" element={<ConfigPage />} />
+          <Route
+            path="*"
+            element={
+              <ErrorBoundary error={error}>
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  {role === 'Administrator' && (
+                    <>
+                      <Route path="/register-regulatory-authority" element={<RegulatoryAuthorityRegistration />} />
+                      <Route path="/query-page" element={<QueryPage />} />
+                    </>
+                  )}
+                  {role === 'Regulatory Authority' && (
+                    <>
+                      <Route path="/register-physician" element={<PhysicianRegistration />} />
+                      <Route path="/register-pharmacy" element={<PharmacyRegistration />} />
+                      <Route path="/register-patient" element={<PatientRegistration />} />
+                      <Route path="/query-page" element={<QueryPage />} />
+                    </>
+                  )}
+                  <Route path="*" element={<RedirectToHome />} />
+                </Routes>
+              </ErrorBoundary>
+            }
+          />
         </Routes>
       </div>
     </Router>
