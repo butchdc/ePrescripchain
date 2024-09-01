@@ -7,12 +7,12 @@ const SECRET_KEY = process.env.REACT_APP_SECRET_KEY;
 const apiBaseURL = process.env.REACT_APP_API_BASE_URL; 
 
 // Function to encrypt individual values
-const encryptValue = (value) => {
+export const encryptValue = (value) => {
     return CryptoJS.AES.encrypt(value, SECRET_KEY).toString();
 };
 
 // Function to decrypt individual values
-const decryptValue = (encryptedValue) => {
+export const decryptValue = (encryptedValue) => {
     const bytes = CryptoJS.AES.decrypt(encryptedValue, SECRET_KEY);
     return bytes.toString(CryptoJS.enc.Utf8);
 };
@@ -53,7 +53,8 @@ const fetchIPFSClientUrl = async () => {
 // Initialize IPFS client dynamically
 let ipfsClient;
 const initializeIPFSClient = async () => {
-    const url = await fetchIPFSClientUrl();
+    const encryptedURL = await fetchIPFSClientUrl();
+    const url = decryptValue(encryptedURL);
     ipfsClient = create({ url });
 };
 

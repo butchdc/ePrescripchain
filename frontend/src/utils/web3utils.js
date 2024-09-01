@@ -1,5 +1,6 @@
 import Web3 from 'web3';
 import axios from 'axios';
+import { decryptValue } from '../utils/ipfsutils'; 
 
 // Retrieve the base URL for the API from environment variables
 const apiBaseURL = process.env.REACT_APP_API_BASE_URL;
@@ -28,9 +29,12 @@ const fetchSetting = async (key) => {
 // Function to initialize a contract
 const initContract = async (web3Instance, addressKey, abiKey) => {
     try {
-        // Fetch the contract address and ABI from the backend
-        const address = await fetchSetting(addressKey);
-        const abiString = await fetchSetting(abiKey);
+        // Fetch and decrypt the contract address and ABI from the backend
+        const encryptedAddress = await fetchSetting(addressKey);
+        const encryptedAbi = await fetchSetting(abiKey);
+        
+        const address = decryptValue(encryptedAddress);
+        const abiString = decryptValue(encryptedAbi);
 
         // Parse the ABI from JSON string
         let abi;

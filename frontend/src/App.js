@@ -11,6 +11,7 @@ import useUserRole from './hooks/useuserrole';
 import RedirectToHome from './views/redirecttohome';
 import QueryPage from './views/querypage';
 import ConfigPage from './components/configpage';
+import PrescriptionForm from './views/prescriptionform';
 
 // Component to handle errors
 const ErrorBoundary = ({ error, children }) => {
@@ -37,6 +38,7 @@ function App() {
         <Navbar role={role} />
         <Routes>
           <Route path="/config" element={<ConfigPage />} />
+          <Route path='/prescription' element={<PrescriptionForm />} />
           <Route
             path="*"
             element={

@@ -14,13 +14,13 @@ contract Prescription {
 
     // Mapping for storing the selected pharmacy for each patient or physician
     mapping(address => PharmacySelect) public PharmaciesSelection;
-    mapping(address => bool) public hasPharmacySelected;  // Tracks whether a patient or physician has already selected a pharmacy
+    mapping(address => bool) public hasPharmacySelected; 
 
     enum MedicineCollectionState { ReadyForCollection, Collected }
     MedicineCollectionState public medicineCollectionState;
 
     uint public patientID;
-    string public IPFShash;  // Store IPFS hash as string
+    string public IPFShash;  
 
     event PharmacySelected(address _pharmacy);
     event PrescriptionCreated(

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import { encryptValue, decryptValue } from '../utils/ipfsutils'; 
 
 const ConfigPage = () => {
     const [settings, setSettings] = useState({
@@ -52,11 +53,11 @@ const ConfigPage = () => {
                 const url = await fetchSetting('ipfsClientURL');
                 
                 setSettings({
-                    registrationContractAddress: addressReg,
-                    registrationContractABI: abiReg,
-                    prescriptionContractAddress: addressPres,
-                    prescriptionContractABI: abiPres,
-                    ipfsClientURL: url
+                    registrationContractAddress: decryptValue(addressReg),
+                    registrationContractABI: decryptValue(abiReg),
+                    prescriptionContractAddress: decryptValue(addressPres),
+                    prescriptionContractABI: decryptValue(abiPres),
+                    ipfsClientURL: decryptValue(url)
                 });
             } catch (error) {
                 console.error('Error fetching settings:', error);
@@ -80,13 +81,22 @@ const ConfigPage = () => {
             return;
         }
 
+        // Encrypt the values before sending them
+        const encryptedSettings = {
+            registrationContractAddress: encryptValue(settings.registrationContractAddress),
+            registrationContractABI: encryptValue(settings.registrationContractABI),
+            prescriptionContractAddress: encryptValue(settings.prescriptionContractAddress),
+            prescriptionContractABI: encryptValue(settings.prescriptionContractABI),
+            ipfsClientURL: encryptValue(settings.ipfsClientURL)
+        };
+
         try {
             await axios.all([
-                axios.put(`${apiBaseURL}/registrationContractAddress`, { value: settings.registrationContractAddress }),
-                axios.put(`${apiBaseURL}/registrationContractABI`, { value: settings.registrationContractABI }),
-                axios.put(`${apiBaseURL}/prescriptionContractAddress`, { value: settings.prescriptionContractAddress }),
-                axios.put(`${apiBaseURL}/prescriptionContractABI`, { value: settings.prescriptionContractABI }),
-                axios.put(`${apiBaseURL}/ipfsClientURL`, { value: settings.ipfsClientURL })
+                axios.put(`${apiBaseURL}/registrationContractAddress`, { value: encryptedSettings.registrationContractAddress }),
+                axios.put(`${apiBaseURL}/registrationContractABI`, { value: encryptedSettings.registrationContractABI }),
+                axios.put(`${apiBaseURL}/prescriptionContractAddress`, { value: encryptedSettings.prescriptionContractAddress }),
+                axios.put(`${apiBaseURL}/prescriptionContractABI`, { value: encryptedSettings.prescriptionContractABI }),
+                axios.put(`${apiBaseURL}/ipfsClientURL`, { value: encryptedSettings.ipfsClientURL })
             ]);
             setIsEditing(false);
             alert('Settings updated successfully');
