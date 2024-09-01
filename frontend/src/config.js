@@ -1,5 +1,5 @@
 export const REGISTRATION_CONTRACT = {
-    ADDRESS: '0x3b0C7d694f8A3A96917bE587133B505B299863aD',
+    ADDRESS: '0x673ED163E520e78fAb1918f798D2710D2Ab35582',
     ABI: [
       {
         "inputs": [],
@@ -449,5 +449,4 @@ export const REGISTRATION_CONTRACT = {
   };
   
   export const IPFS_CLIENT = {
-    URL: 'http://127.0.0.1:5001/api/v0' // Replace with your IPFS URL if different
-  };
+    URL: 'http://127.0.0.1:5001/api/v0' };

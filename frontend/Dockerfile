@@ -11,3 +11,4 @@ RUN npm install
 
 # Command to run the application
 CMD npm start
+# CMD tail -f /dev/null

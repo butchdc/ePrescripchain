@@ -15506,12 +15506,12 @@
     "5777": {
       "events": {},
       "links": {},
-      "address": "0x23E7D49Fe938aB5Bdc06d10A0BF57330cEaeEFdc",
-      "transactionHash": "0x8d90a8cdc930aa3c309679da8bf2be8d273533f08758a9e30e01c62f0df01af9"
+      "address": "0x8FAe3E1F2BFBf9765DBD46D34A351E2A910B6B83",
+      "transactionHash": "0xdad3ba302619e383ab43c17f29a9e3492a602805fe98ac4057eeece9453d5ff4"
     }
   },
   "schemaVersion": "3.4.16",
-  "updatedAt": "2024-08-31T07:28:22.298Z",
+  "updatedAt": "2024-08-31T19:24:14.723Z",
   "networkType": "ethereum",
   "devdoc": {
     "kind": "dev",

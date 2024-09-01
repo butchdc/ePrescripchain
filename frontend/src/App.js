@@ -10,6 +10,7 @@ import PatientRegistration from './views/patientregistration';
 import useUserRole from './hooks/useuserrole';
 import RedirectToHome from './views/redirecttohome';
 import QueryPage from './views/querypage';
+import ConfigPage from './components/configpage';
 
 function App() {
   const { role, loading, error, ethereumAvailable } = useUserRole();
@@ -43,6 +44,7 @@ function App() {
               <Route path="/query-page" element={<QueryPage />} />
             </>
           )}
+          <Route path='/config' element={<ConfigPage />} />
           <Route path="*" element={<RedirectToHome />} /> 
         </Routes>
       </div>

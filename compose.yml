@@ -1,10 +1,10 @@
 services:
   dapp:
     build:
-      context: ./frontend  # Path to the frontend directory
+      context: ./frontend
     container_name: frontend
     volumes:
-      - ./frontend:/app  # Mount the frontend directory to /app inside the container
+      - ./frontend:/app
     ports:
       - "3000:3000"
     restart: unless-stopped
@@ -13,9 +13,19 @@ services:
     image: ipfs/go-ipfs:latest
     container_name: ipfs_node
     ports:
-      - "4001:4001"  # IPFS swarm port
-      - "5001:5001"  # IPFS API port
-      - "8080:8080"  # IPFS gateway port
+      - "4001:4001"
+      - "5001:5001"
+      - "8080:8080"
     volumes:
-      - ./ipfs/data:/data/ipfs  # Mount the IPFS data directory
+      - ./ipfs/data:/data/ipfs
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+    container_name: backend
+    volumes:
+      - ./backend:/app
+    ports:
+      - "3001:3001"
     restart: unless-stopped
