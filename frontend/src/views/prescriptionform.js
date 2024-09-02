@@ -4,7 +4,7 @@ const PrescriptionForm = () => {
     const [physicianAddress, setPhysicianAddress] = useState('');
     const [patientAddress, setPatientAddress] = useState('');
     const [diagnosis, setDiagnosis] = useState('');
-    const [drugs, setDrugs] = useState([{ name: '', sig: '', mitte: '', mitteUnit: 'pcs', repeat: '' }]);
+    const [drugs, setDrugs] = useState([{ name: '', sig: '', mitte: '', mitteUnit: 'tablets', repeat: '' }]);
 
     const handleDrugChange = (index, e) => {
         const { name, value } = e.target;
@@ -14,7 +14,7 @@ const PrescriptionForm = () => {
     };
 
     const addDrug = () => {
-        setDrugs([...drugs, { name: '', sig: '', mitte: '', mitteUnit: 'pcs', repeat: '' }]);
+        setDrugs([...drugs, { name: '', sig: '', mitte: '', mitteUnit: 'tablets', repeat: '' }]);
     };
 
     const removeDrug = (index) => {
@@ -132,8 +132,12 @@ const PrescriptionForm = () => {
                                                 autoComplete='off'
                                                 tabIndex={5}
                                             >
-                                                <option value="pcs">pcs</option>                                                
+                                                <option value="tablets">tablets</option>
+                                                <option value="capsules">capsules</option>
                                                 <option value="ml">ml</option>
+                                                <option value="units">units</option>
+                                                <option value="mg">mg</option>
+                                                <option value="g">g</option>
                                             </select>
                                         </div>
                                     </div>

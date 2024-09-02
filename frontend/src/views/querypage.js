@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import useUserRole from '../hooks/useuserrole'; 
-import { downloadFromIPFS } from '../utils/ipfsutils'; 
-import { initWeb3, initContracts } from '../utils/web3utils'; 
+import useUserRole from '../hooks/useuserrole';
+import { getUserRoleAndAttributes } from '../utils/userqueryutils';
 
 const QueryPage = () => {
     const [address, setAddress] = useState('');
@@ -37,48 +36,11 @@ const QueryPage = () => {
         setAttributes(null);
 
         try {
-            const web3 = await initWeb3();
-            const {registrationContract} = await initContracts(web3);
-
-            // Fetch role
-            const isAdministrator = await registrationContract.methods.administrator().call();
-            const isAdmin = isAdministrator.toLowerCase() === address.toLowerCase();
-            const isPhysician = await registrationContract.methods.Physician(address).call();
-            const isPatient = await registrationContract.methods.Patient(address).call();
-            const isPharmacy = await registrationContract.methods.Pharmacy(address).call();
-            const isRegulatoryAuthority = await registrationContract.methods.isRegulatoryAuthority(address).call();
-
-            if (isAdmin) {
-                setRole('Administrator');
-            } else if (isRegulatoryAuthority) {
-                setRole('Regulatory Authority');
-            } else if (isPhysician) {
-                setRole('Physician');
-            } else if (isPatient) {
-                setRole('Patient');
-            } else if (isPharmacy) {
-                setRole('Pharmacy');
-            } else {
-                setRole(<p className='text-danger h6'>Account is not Registered!</p>);
-            }
-
-            // Fetch attributes from IPFS
-            let attributes = {};
-            if (isPhysician) {
-                const ipfsHash = await registrationContract.methods.physicianIPFSHash(address).call();
-                attributes = await downloadFromIPFS(ipfsHash);
-            } else if (isPatient) {
-                const ipfsHash = await registrationContract.methods.patientIPFSHash(address).call();
-                attributes = await downloadFromIPFS(ipfsHash);
-            } else if (isPharmacy) {
-                const ipfsHash = await registrationContract.methods.pharmacyIPFSHash(address).call();
-                attributes = await downloadFromIPFS(ipfsHash);
-            } else if (isRegulatoryAuthority) {
-                const ipfsHash = await registrationContract.methods.regulatoryAuthorityIPFSHash(address).call();
-                attributes = await downloadFromIPFS(ipfsHash);
-            }
+            const { role, attributes } = await getUserRoleAndAttributes(address);
+            console.log('Fetched Role:', role); // Log role for debugging
+            console.log('Fetched Attributes:', attributes); // Log attributes for debugging
+            setRole(role);
             setAttributes(attributes);
-
         } catch (err) {
             setError(err.message);
         } finally {
@@ -118,7 +80,7 @@ const QueryPage = () => {
                         <div className="mt-3">
                             <h5>Role:</h5>
                             <p>{role}</p>
-                            {attributes && (
+                            {attributes && Object.keys(attributes).length > 0 ? (
                                 <div>
                                     <h5>Attributes:</h5>
                                     <table className="table table-sm table-striped">
@@ -138,6 +100,8 @@ const QueryPage = () => {
                                         </tbody>
                                     </table>
                                 </div>
+                            ) : (
+                                <p>No attributes available.</p>
                             )}
                         </div>
                     )}
