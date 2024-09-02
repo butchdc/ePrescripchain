@@ -1,6 +1,11 @@
 import { downloadFromIPFS } from '../utils/ipfsutils';
 import { initWeb3, initContracts } from '../utils/web3utils';
 
+const fetchAttributes = async (contractMethod, address) => {
+    const ipfsHash = await contractMethod(address).call();
+    return await downloadFromIPFS(ipfsHash);
+};
+
 export const getUserRoleAndAttributes = async (address) => {
     try {
         const web3 = await initWeb3();
@@ -21,26 +26,23 @@ export const getUserRoleAndAttributes = async (address) => {
             role = 'Administrator';
         } else if (isRegulatoryAuthority) {
             role = 'Regulatory Authority';
-            const ipfsHash = await registrationContract.methods.regulatoryAuthorityIPFSHash(address).call();
-            attributes = await downloadFromIPFS(ipfsHash);
+            attributes = await fetchAttributes(registrationContract.methods.regulatoryAuthorityIPFSHash, address);
         } else if (isPhysician) {
             role = 'Physician';
-            const ipfsHash = await registrationContract.methods.physicianIPFSHash(address).call();
-            attributes = await downloadFromIPFS(ipfsHash);
+            attributes = await fetchAttributes(registrationContract.methods.physicianIPFSHash, address);
         } else if (isPatient) {
             role = 'Patient';
-            const ipfsHash = await registrationContract.methods.patientIPFSHash(address).call();
-            attributes = await downloadFromIPFS(ipfsHash);
+            attributes = await fetchAttributes(registrationContract.methods.patientIPFSHash, address);
         } else if (isPharmacy) {
             role = 'Pharmacy';
-            const ipfsHash = await registrationContract.methods.pharmacyIPFSHash(address).call();
-            attributes = await downloadFromIPFS(ipfsHash);
+            attributes = await fetchAttributes(registrationContract.methods.pharmacyIPFSHash, address);
         } else {
             role = 'Account is not Registered!';
         }
 
         return { role, attributes };
     } catch (err) {
-        throw new Error(err.message);
+        console.error('Error in getUserRoleAndAttributes:', err);
+        throw new Error(`Failed to get user role and attributes: ${err.message}`);
     }
 };

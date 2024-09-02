@@ -29,7 +29,6 @@ function App() {
   return (
     <Router>
       <div className="App">
-        {/* Show MetaMask alert if MetaMask is not available */}
         {!ethereumAvailable && (
           <div className="alert alert-warning" role="alert">
             MetaMask is not installed. Some features may not be available.

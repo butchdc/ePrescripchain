@@ -1,7 +1,58 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { initWeb3 } from '../utils/web3utils';
+import { getUserRoleAndAttributes } from '../utils/userqueryutils';
 
-const Navbar = ({ role }) => {
+const Navbar = () => {
+    const [role, setRole] = useState('');
+    const [attributes, setAttributes] = useState({});
+    const [userAddress, setUserAddress] = useState('');
+    const [line1, setLine1] = useState('');
+    const [line2, setLine2] = useState('');
+
+    useEffect(() => {
+        const fetchAccountData = async () => {
+            try {
+                // Initialize Web3 and get accounts
+                const web3 = await initWeb3();
+                const accounts = await web3.eth.getAccounts();
+                const address = accounts[0];
+                setUserAddress(address);
+
+                // Fetch role and attributes
+                const { role, attributes } = await getUserRoleAndAttributes(address);
+                setRole(role);
+                setAttributes(attributes);
+                if(role === 'Regulatory Authority'){
+                    setLine1(attributes.name);
+                    setLine2(`${attributes.organization}`);
+                    return;
+                }
+                if(role === 'Physician'){
+                    setLine1(`${attributes.name} (NZMC: ${attributes.nzmcNo})`);
+                    setLine2(attributes.speciality);
+                    return;
+                }
+                if(role === 'Pharmacy'){
+                    setLine1(attributes.pharmacyName);
+                    setLine2(attributes.pharmacyAddress);
+                    return;
+                }
+                if(role === 'Patient'){
+                    setLine1(`${attributes.name} (NHI: ${attributes.nhiNumber})`);
+                    setLine2(attributes.patientAddress);
+                    return;
+                }
+
+            } catch (error) {
+                console.error("Error fetching account data:", error);
+                setRole('Error');
+            }
+        };
+
+        fetchAccountData();
+    }, []);
+
     return (
         <nav className="navbar navbar-expand-lg navbar-dark bgcolor1 ps-3 pe-3 m-0">
             <Link className="navbar-brand" to="/">e-Prescription DApp</Link>
@@ -46,14 +97,20 @@ const Navbar = ({ role }) => {
                         </>
                     )}
                     {role === 'Physician' && (
-                        <>
-                            <li className="nav-item">
-                                <Link className="nav-link" to="/create-prescription">Create Prescription</Link>
-                            </li>
-                        </>
+                        <li className="nav-item">
+                            <Link className="nav-link" to="/create-prescription">Create Prescription</Link>
+                        </li>
                     )}
                 </ul>
-                <div className="ms-auto text-light">{role}</div>
+                {role != 'Account is not Registered!' ? 
+                <div className="text-light">
+                    <div className='m-0 p-0'>{line1} </div>                  
+                    <div className='smallfont txcolor1 m-0 p-0'>{line2}</div> 
+                    <div className='smallfont'>Current Role: {role}</div>
+                    <div style={{fontSize:6}}>{userAddress}</div>
+                </div>
+                : <div className="text-light smallfont">{role}</div>
+                }
             </div>
         </nav>
     );
