@@ -4,7 +4,7 @@ const PrescriptionForm = () => {
     const [physicianAddress, setPhysicianAddress] = useState('');
     const [patientAddress, setPatientAddress] = useState('');
     const [diagnosis, setDiagnosis] = useState('');
-    const [drugs, setDrugs] = useState([{ name: '', sig: '', mitte: '', mitteUnit: 'ml', repeat: '' }]);
+    const [drugs, setDrugs] = useState([{ name: '', sig: '', mitte: '', mitteUnit: 'pcs', repeat: '' }]);
 
     const handleDrugChange = (index, e) => {
         const { name, value } = e.target;
@@ -14,7 +14,7 @@ const PrescriptionForm = () => {
     };
 
     const addDrug = () => {
-        setDrugs([...drugs, { name: '', sig: '', mitte: '', mitteUnit: 'ml', repeat: '' }]);
+        setDrugs([...drugs, { name: '', sig: '', mitte: '', mitteUnit: 'pcs', repeat: '' }]);
     };
 
     const removeDrug = (index) => {
@@ -43,7 +43,9 @@ const PrescriptionForm = () => {
                         id="physicianAddress"
                         value={physicianAddress}
                         onChange={(e) => setPhysicianAddress(e.target.value)}
+                        placeholder='Physician Address'
                         required
+                        autoComplete='off'
                     />
                     <label htmlFor="physicianAddress">Physician Address</label>
                 </div>
@@ -54,7 +56,9 @@ const PrescriptionForm = () => {
                         id="patientAddress"
                         value={patientAddress}
                         onChange={(e) => setPatientAddress(e.target.value)}
+                        placeholder='Patient Address'
                         required
+                        autoComplete='off'
                     />
                     <label htmlFor="patientAddress">Patient Address</label>
                 </div>
@@ -65,7 +69,9 @@ const PrescriptionForm = () => {
                         id="diagnosis"
                         value={diagnosis}
                         onChange={(e) => setDiagnosis(e.target.value)}
+                        placeholder='Diagnosis'
                         required
+                        autoComplete='off'
                     />
                     <label htmlFor="diagnosis">Diagnosis</label>
                 </div>
@@ -97,12 +103,13 @@ const PrescriptionForm = () => {
                                         value={drug.name}
                                         onChange={(e) => handleDrugChange(index, e)}
                                         required
+                                        autoComplete='off'
                                         tabIndex={1}
                                     />
                                 </div>
                                 <div className="d-flex">
                                     <div className="form-group mb-2 flex-grow-1 me-2">
-                                        <label htmlFor={`drugMitte${index}`}>MITTE (Quantity)</label>
+                                        <label htmlFor={`drugMitte${index}`}>Mitte (Quantity)</label>
                                         <div className="input-group">
                                             <input
                                                 type="number"
@@ -112,6 +119,7 @@ const PrescriptionForm = () => {
                                                 value={drug.mitte}
                                                 onChange={(e) => handleDrugChange(index, e)}
                                                 required
+                                                autoComplete='off'
                                                 tabIndex={4}
                                             />
                                             <select
@@ -121,10 +129,11 @@ const PrescriptionForm = () => {
                                                 value={drug.mitteUnit}
                                                 onChange={(e) => handleDrugChange(index, e)}
                                                 required
+                                                autoComplete='off'
                                                 tabIndex={5}
                                             >
+                                                <option value="pcs">pcs</option>                                                
                                                 <option value="ml">ml</option>
-                                                <option value="pcs">pcs</option>
                                             </select>
                                         </div>
                                     </div>
@@ -138,6 +147,7 @@ const PrescriptionForm = () => {
                                             value={drug.repeat}
                                             onChange={(e) => handleDrugChange(index, e)}
                                             required
+                                            autoComplete='off'
                                             tabIndex={6}
                                         />
                                     </div>
@@ -154,6 +164,7 @@ const PrescriptionForm = () => {
                                         onChange={(e) => handleDrugChange(index, e)}
                                         rows="4"
                                         required
+                                        autoComplete='off'
                                         tabIndex={2}
                                     />
                                 </div>
@@ -163,7 +174,6 @@ const PrescriptionForm = () => {
                 ))}
                 <hr className="mb-1" /> 
                 <div className="d-flex justify-content-between mt-3">
-
                     <button
                         type="button"
                         className="btn btn-sm btn-success"

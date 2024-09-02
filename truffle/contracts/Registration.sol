@@ -9,7 +9,7 @@ contract Registration {
     mapping(address => bool) public Physician;
     mapping(address => bool) public Patient;
     mapping(address => bool) public Pharmacy;
-    mapping(address => bool) public isRegulatoryAuthority;
+    mapping(address => bool) public regulatoryAuthority;
 
     // Mappings to store IPFS hashes
     mapping(address => string) public physicianIPFSHash;
@@ -29,7 +29,7 @@ contract Registration {
     }
 
     modifier onlyRegulatoryAuthority() {
-        require(isRegulatoryAuthority[msg.sender], "Only a registered regulatory authority can run this function");
+        require(regulatoryAuthority[msg.sender], "Only a registered regulatory authority can run this function"); // Updated variable name
         _;
     }
 
@@ -39,14 +39,14 @@ contract Registration {
         emit ContractDeployed(administrator);
     }
 
-    function registerRegulatoryAuthority(address _regulatoryAuthority, string memory _ipfsHash) public onlyAdministrator {
-        require(_regulatoryAuthority != address(0), "Invalid address");
-        require(!isRegulatoryAuthority[_regulatoryAuthority], "Regulatory authority already registered");
+    function registerRegulatoryAuthority(address user, string memory _ipfsHash) public onlyAdministrator { // Renamed parameter to 'user'
+        require(user != address(0), "Invalid address");
+        require(!regulatoryAuthority[user], "Regulatory authority already registered"); // Updated variable name
         
-        isRegulatoryAuthority[_regulatoryAuthority] = true;
-        regulatoryAuthorityIPFSHash[_regulatoryAuthority] = _ipfsHash;
+        regulatoryAuthority[user] = true; // Updated variable name
+        regulatoryAuthorityIPFSHash[user] = _ipfsHash;
         
-        emit RegulatoryAuthorityRegistered(msg.sender, _regulatoryAuthority, _ipfsHash);
+        emit RegulatoryAuthorityRegistered(msg.sender, user, _ipfsHash);
     }
 
     function PhysicianRegistration(address user, string memory _ipfsHash) public onlyRegulatoryAuthority {
@@ -59,14 +59,14 @@ contract Registration {
         emit PhysicianRegistered(msg.sender, user, _ipfsHash);
     }
 
-    function PharmacyRegistration(address _Pharmacy, string memory _ipfsHash) public onlyRegulatoryAuthority {
-        require(_Pharmacy != address(0), "Invalid address");
-        require(!Pharmacy[_Pharmacy], "The pharmacy is already registered");
+    function PharmacyRegistration(address user, string memory _ipfsHash) public onlyRegulatoryAuthority { // Renamed parameter to 'user'
+        require(user != address(0), "Invalid address");
+        require(!Pharmacy[user], "The pharmacy is already registered");
         
-        Pharmacy[_Pharmacy] = true;
-        pharmacyIPFSHash[_Pharmacy] = _ipfsHash;
+        Pharmacy[user] = true;
+        pharmacyIPFSHash[user] = _ipfsHash;
         
-        emit PharmacyRegistered(msg.sender, _Pharmacy, _ipfsHash);
+        emit PharmacyRegistered(msg.sender, user, _ipfsHash);
     }
 
     function PatientRegistration(address user, string memory _ipfsHash) public onlyRegulatoryAuthority {
@@ -80,19 +80,19 @@ contract Registration {
     }
     
     // Getter functions for IPFS hashes
-    function getPhysicianIPFSHash(address physician) public view returns (string memory) {
-        return physicianIPFSHash[physician];
+    function getPhysicianIPFSHash(address user) public view returns (string memory) {
+        return physicianIPFSHash[user];
     }
 
-    function getPatientIPFSHash(address patient) public view returns (string memory) {
-        return patientIPFSHash[patient];
+    function getPatientIPFSHash(address user) public view returns (string memory) {
+        return patientIPFSHash[user];
     }
 
-    function getPharmacyIPFSHash(address pharmacy) public view returns (string memory) {
-        return pharmacyIPFSHash[pharmacy];
+    function getPharmacyIPFSHash(address user) public view returns (string memory) {
+        return pharmacyIPFSHash[user];
     }
 
-    function getRegulatoryAuthorityIPFSHash(address regulatoryAuthority) public view returns (string memory) {
-        return regulatoryAuthorityIPFSHash[regulatoryAuthority];
+    function getRegulatoryAuthorityIPFSHash(address user) public view returns (string memory) { // Renamed parameter to 'user'
+        return regulatoryAuthorityIPFSHash[user];
     }
 }

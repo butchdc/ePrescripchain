@@ -59,7 +59,7 @@ const QueryPage = () => {
             } else if (isPharmacy) {
                 setRole('Pharmacy');
             } else {
-                setRole('Account not Registered');
+                setRole(<p className='text-danger h6'>Account is not Registered!</p>);
             }
 
             // Fetch attributes from IPFS
@@ -104,6 +104,7 @@ const QueryPage = () => {
                                 onChange={handleChange}
                                 placeholder="Account Address"
                                 required
+                                autoComplete='off'
                             />
                             <label htmlFor="address">Account Address</label>
                         </div>

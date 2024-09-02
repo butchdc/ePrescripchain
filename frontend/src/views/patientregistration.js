@@ -80,6 +80,7 @@ const PatientRegistration = () => {
                             value={formState.address}
                             onChange={handleChange}
                             placeholder="Account Address"
+                            autoComplete='off'
                         />
                         <label htmlFor="address">Account Address</label>
                     </div>
@@ -92,6 +93,7 @@ const PatientRegistration = () => {
                             value={formState.name}
                             onChange={handleChange}
                             placeholder="Name"
+                            autoComplete='off'
                         />
                         <label htmlFor="name">Name</label>
                     </div>
@@ -104,6 +106,7 @@ const PatientRegistration = () => {
                             value={formState.patientAddress}
                             onChange={handleChange}
                             placeholder="Address"
+                            autoComplete='off'
                         />
                         <label htmlFor="patientAddress">Address</label>
                     </div>
@@ -132,6 +135,7 @@ const PatientRegistration = () => {
                             value={formState.dateOfBirth}
                             onChange={handleChange}
                             placeholder="Date of Birth"
+                            autoComplete='off'
                         />
                         <label htmlFor="dateOfBirth">Date of Birth</label>
                     </div>
@@ -144,6 +148,7 @@ const PatientRegistration = () => {
                             value={formState.nhiNumber}
                             onChange={handleChange}
                             placeholder="NHI No"
+                            autoComplete='off'
                         />
                         <label htmlFor="nhiNumber">NHI No</label>
                     </div>

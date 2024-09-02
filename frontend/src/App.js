@@ -38,7 +38,6 @@ function App() {
         <Navbar role={role} />
         <Routes>
           <Route path="/config" element={<ConfigPage />} />
-          <Route path='/prescription' element={<PrescriptionForm />} />
           <Route
             path="*"
             element={
@@ -57,6 +56,11 @@ function App() {
                       <Route path="/register-pharmacy" element={<PharmacyRegistration />} />
                       <Route path="/register-patient" element={<PatientRegistration />} />
                       <Route path="/query-page" element={<QueryPage />} />
+                    </>
+                  )}
+                  {role === 'Physician' && (
+                    <>
+                      <Route path='/create-prescription' element={<PrescriptionForm />} />
                     </>
                   )}
                   <Route path="*" element={<RedirectToHome />} />

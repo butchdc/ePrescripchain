@@ -8,8 +8,8 @@ const Navbar = ({ role }) => {
             <button 
                 className="navbar-toggler" 
                 type="button" 
-                data-toggle="collapse" 
-                data-target="#navbarSupportedContent" 
+                data-bs-toggle="collapse" 
+                data-bs-target="#navbarSupportedContent" 
                 aria-controls="navbarSupportedContent" 
                 aria-expanded="false" 
                 aria-label="Toggle navigation"
@@ -17,8 +17,8 @@ const Navbar = ({ role }) => {
                 <span className="navbar-toggler-icon"></span>
             </button>
 
-            <div className="collapse navbar-collapse hstack" id="navbarSupportedContent">
-                <ul className="navbar-nav mr-auto col">
+            <div className="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul className="navbar-nav me-auto">
                     {role === 'Administrator' && (
                         <>
                             <li className="nav-item">
@@ -45,8 +45,15 @@ const Navbar = ({ role }) => {
                             </li>
                         </>
                     )}
+                    {role === 'Physician' && (
+                        <>
+                            <li className="nav-item">
+                                <Link className="nav-link" to="/create-prescription">Create Prescription</Link>
+                            </li>
+                        </>
+                    )}
                 </ul>
-                <div className="txcolor1">{role}</div>
+                <div className="ms-auto text-light">{role}</div>
             </div>
         </nav>
     );

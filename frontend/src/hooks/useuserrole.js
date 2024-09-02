@@ -28,7 +28,7 @@ const useUserRole = () => {
             const isPhysician = await registrationContract.methods.Physician(userAddress).call();
             const isPatient = await registrationContract.methods.Patient(userAddress).call();
             const isPharmacy = await registrationContract.methods.Pharmacy(userAddress).call();
-            const isRegulatoryAuthority = await registrationContract.methods.isRegulatoryAuthority(userAddress).call();
+            const isRegulatoryAuthority = await registrationContract.methods.regulatoryAuthority(userAddress).call();
 
             if (isAdministrator) {
                 setRole('Administrator');
@@ -41,7 +41,7 @@ const useUserRole = () => {
             } else if (isPharmacy) {
                 setRole('Pharmacy');
             } else {
-                setRole('Register or Login to Metamask');
+                setRole('Account is not Registered');
             }
         } catch (err) {
             setError(err.message);

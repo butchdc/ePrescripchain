@@ -79,6 +79,7 @@ const PhysicianRegistration = () => {
                             value={formState.address}
                             onChange={handleChange}
                             placeholder="Account Address"
+                            autoComplete='off'
                         />
                         <label htmlFor="address">Account Address</label>
                     </div>
@@ -91,6 +92,7 @@ const PhysicianRegistration = () => {
                             value={formState.name}
                             onChange={handleChange}
                             placeholder="Name"
+                            autoComplete='off'
                         />
                         <label htmlFor="name">Name</label>
                     </div>
@@ -103,6 +105,7 @@ const PhysicianRegistration = () => {
                             value={formState.speciality}
                             onChange={handleChange}
                             placeholder="Speciality"
+                            autoComplete='off'
                         />
                         <label htmlFor="speciality">Speciality</label>
                     </div>
@@ -115,6 +118,7 @@ const PhysicianRegistration = () => {
                             value={formState.contactNumber}
                             onChange={handleChange}
                             placeholder="Contact Number"
+                            autoComplete='off'
                         />
                         <label htmlFor="contactNumber">Contact Number</label>
                     </div>
@@ -127,6 +131,7 @@ const PhysicianRegistration = () => {
                             value={formState.nzmcNo}
                             onChange={handleChange}
                             placeholder="NZMC No"
+                            autoComplete='off'
                         />
                         <label htmlFor="nzmcNo">NZMC No</label>
                     </div>

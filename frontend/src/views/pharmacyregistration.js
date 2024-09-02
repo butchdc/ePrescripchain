@@ -79,6 +79,7 @@ const PharmacyRegistration = () => {
                             value={formState.address}
                             onChange={handleChange}
                             placeholder="Account Address"
+                            autoComplete='off'
                         />
                         <label htmlFor="address">Account Address</label>
                     </div>
@@ -91,6 +92,7 @@ const PharmacyRegistration = () => {
                             value={formState.pharmacyName}
                             onChange={handleChange}
                             placeholder="Pharmacy Name"
+                            autoComplete='off'
                         />
                         <label htmlFor="pharmacyName">Pharmacy Name</label>
                     </div>
@@ -103,6 +105,7 @@ const PharmacyRegistration = () => {
                             value={formState.pharmacyAddress}
                             onChange={handleChange}
                             placeholder="Pharmacy Address"
+                            autoComplete='off'
                         />
                         <label htmlFor="pharmacyAddress">Pharmacy Address</label>
                     </div>
@@ -115,6 +118,7 @@ const PharmacyRegistration = () => {
                             value={formState.contactPerson}
                             onChange={handleChange}
                             placeholder="Contact Person"
+                            autoComplete='off'
                         />
                         <label htmlFor="contactPerson">Contact Person</label>
                     </div>
@@ -127,6 +131,7 @@ const PharmacyRegistration = () => {
                             value={formState.contactNumber}
                             onChange={handleChange}
                             placeholder="Contact Number"
+                            autoComplete='off'
                         />
                         <label htmlFor="contactNumber">Contact Number</label>
                     </div>

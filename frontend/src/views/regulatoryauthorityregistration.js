@@ -43,11 +43,18 @@ const RegulatoryAuthorityRegistration = () => {
                 throw new Error('All fields are required');
             }
 
-            const data = { name, contactNumber, contactEmail, organization };
-            const ipfsHash = await uploadToIPFS(data);
-
             const web3 = await initWeb3();
             const { registrationContract } = await initContracts(web3);
+
+            // Check if the address is already registered
+            const alreadyRegistered = await registrationContract.methods.regulatoryAuthority(address).call();
+
+            if (alreadyRegistered) {
+                throw new Error('This address is already registered.');
+            }
+
+            const data = { name, contactNumber, contactEmail, organization };
+            const ipfsHash = await uploadToIPFS(data);
 
             const accounts = await web3.eth.getAccounts();
             const userAddress = accounts[0];
@@ -55,6 +62,14 @@ const RegulatoryAuthorityRegistration = () => {
             await registrationContract.methods.registerRegulatoryAuthority(address, ipfsHash).send({ from: userAddress });
 
             setSuccess('Regulatory authority registered successfully!');
+            // Clear the form
+            setFormState({
+                address: '',
+                name: '',
+                contactNumber: '',
+                contactEmail: '',
+                organization: '',
+            });
         } catch (err) {
             setError(err.message);
         } finally {
@@ -79,6 +94,7 @@ const RegulatoryAuthorityRegistration = () => {
                             value={formState.address}
                             onChange={handleChange}
                             placeholder="Account Address"
+                            autoComplete='off'                            
                         />
                         <label htmlFor="address">Account Address</label>
                     </div>
@@ -91,6 +107,7 @@ const RegulatoryAuthorityRegistration = () => {
                             value={formState.name}
                             onChange={handleChange}
                             placeholder="Name"
+                            autoComplete='off'
                         />
                         <label htmlFor="name">Name</label>
                     </div>
@@ -103,6 +120,7 @@ const RegulatoryAuthorityRegistration = () => {
                             value={formState.contactNumber}
                             onChange={handleChange}
                             placeholder="Contact Number"
+                            autoComplete='off'
                         />
                         <label htmlFor="contactNumber">Contact Number</label>
                     </div>
@@ -115,6 +133,7 @@ const RegulatoryAuthorityRegistration = () => {
                             value={formState.contactEmail}
                             onChange={handleChange}
                             placeholder="Contact Email"
+                            autoComplete='off'
                         />
                         <label htmlFor="contactEmail">Contact Email</label>
                     </div>
@@ -127,6 +146,7 @@ const RegulatoryAuthorityRegistration = () => {
                             value={formState.organization}
                             onChange={handleChange}
                             placeholder="Organization"
+                            autoComplete='off'
                         />
                         <label htmlFor="organization">Organization</label>
                     </div>
