@@ -12,6 +12,7 @@ import RedirectToHome from './views/redirecttohome';
 import QueryPage from './views/querypage';
 import ConfigPage from './components/configpage';
 import PrescriptionForm from './views/prescriptionform';
+import DownloadFromIPFS from './components/downloadfromipfs';
 
 // Component to handle errors
 const ErrorBoundary = ({ error, children }) => {
@@ -47,6 +48,7 @@ function App() {
                     <>
                       <Route path="/register-regulatory-authority" element={<RegulatoryAuthorityRegistration />} />
                       <Route path="/query-page" element={<QueryPage />} />
+                      <Route path="/ipfs-query" element={<DownloadFromIPFS />} />
                     </>
                   )}
                   {role === 'Regulatory Authority' && (
@@ -55,6 +57,7 @@ function App() {
                       <Route path="/register-pharmacy" element={<PharmacyRegistration />} />
                       <Route path="/register-patient" element={<PatientRegistration />} />
                       <Route path="/query-page" element={<QueryPage />} />
+                      <Route path="/ipfs-query" element={<DownloadFromIPFS />} />
                     </>
                   )}
                   {role === 'Physician' && (

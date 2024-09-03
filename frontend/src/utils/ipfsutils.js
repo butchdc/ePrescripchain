@@ -4,17 +4,31 @@ import CryptoJS from 'crypto-js';
 
 // Secret key for encryption and decryption from environment variable
 const SECRET_KEY = process.env.REACT_APP_SECRET_KEY;
-const apiBaseURL = process.env.REACT_APP_API_BASE_URL; 
+const apiBaseURL = process.env.REACT_APP_API_BASE_URL;
 
 // Function to encrypt individual values
 export const encryptValue = (value) => {
-    return CryptoJS.AES.encrypt(value, SECRET_KEY).toString();
+    try {
+        // Ensure the value is a JSON string
+        const jsonValue = typeof value === 'string' ? value : JSON.stringify(value);
+        return CryptoJS.AES.encrypt(jsonValue, SECRET_KEY).toString();
+    } catch (error) {
+        console.error('Encryption error:', error);
+        throw error;
+    }
 };
 
 // Function to decrypt individual values
 export const decryptValue = (encryptedValue) => {
-    const bytes = CryptoJS.AES.decrypt(encryptedValue, SECRET_KEY);
-    return bytes.toString(CryptoJS.enc.Utf8);
+    try {
+        const bytes = CryptoJS.AES.decrypt(encryptedValue, SECRET_KEY);
+        const decryptedValue = bytes.toString(CryptoJS.enc.Utf8);
+        // Decrypted value should be JSON string, ensure to return as is or handle accordingly
+        return decryptedValue;
+    } catch (error) {
+        console.error('Decryption error:', error);
+        throw error;
+    }
 };
 
 // Encrypt only the values in the data
@@ -22,7 +36,11 @@ const encryptDataValues = (data) => {
     const encryptedData = {};
     for (const key in data) {
         if (data.hasOwnProperty(key)) {
-            encryptedData[key] = encryptValue(data[key]);
+            try {
+                encryptedData[key] = encryptValue(data[key]);
+            } catch (error) {
+                console.error(`Error encrypting key ${key}:`, error);
+            }
         }
     }
     return encryptedData;
@@ -33,7 +51,17 @@ const decryptDataValues = (encryptedData) => {
     const decryptedData = {};
     for (const key in encryptedData) {
         if (encryptedData.hasOwnProperty(key)) {
-            decryptedData[key] = decryptValue(encryptedData[key]);
+            try {
+                const decryptedValue = decryptValue(encryptedData[key]);
+                try {
+                    decryptedData[key] = JSON.parse(decryptedValue);
+                } catch (parseError) {
+                    decryptedData[key] = decryptedValue; // Use as a plain string if JSON parsing fails
+                }
+            } catch (error) {
+                console.error(`Error decrypting key ${key}:`, error);
+                decryptedData[key] = encryptedData[key]; // Fallback to the encrypted value
+            }
         }
     }
     return decryptedData;
@@ -43,7 +71,7 @@ const decryptDataValues = (encryptedData) => {
 const fetchIPFSClientUrl = async () => {
     try {
         const response = await axios.get(`${apiBaseURL}/ipfsClientURL`);
-        return response.data.value; 
+        return response.data.value;
     } catch (error) {
         console.error('Failed to fetch IPFS client URL:', error);
         throw new Error('Failed to fetch IPFS client URL');
@@ -53,15 +81,20 @@ const fetchIPFSClientUrl = async () => {
 // Initialize IPFS client dynamically
 let ipfsClient;
 const initializeIPFSClient = async () => {
-    const encryptedURL = await fetchIPFSClientUrl();
-    const url = decryptValue(encryptedURL);
-    ipfsClient = create({ url });
+    try {
+        const encryptedURL = await fetchIPFSClientUrl();
+        const url = decryptValue(encryptedURL);
+        ipfsClient = create({ url });
+    } catch (error) {
+        console.error('Failed to initialize IPFS client:', error);
+        throw new Error('Failed to initialize IPFS client');
+    }
 };
 
 // Upload data to IPFS
 export const uploadToIPFS = async (data) => {
     try {
-        if (!ipfsClient) await initializeIPFSClient(); 
+        if (!ipfsClient) await initializeIPFSClient();
 
         const encryptedData = encryptDataValues(data);
         const result = await ipfsClient.add(JSON.stringify(encryptedData));
@@ -75,7 +108,7 @@ export const uploadToIPFS = async (data) => {
 // Download data from IPFS
 export const downloadFromIPFS = async (cid) => {
     try {
-        if (!ipfsClient) await initializeIPFSClient(); 
+        if (!ipfsClient) await initializeIPFSClient();
 
         const stream = ipfsClient.cat(cid);
         let encryptedDataString = '';
@@ -85,9 +118,23 @@ export const downloadFromIPFS = async (cid) => {
         }
 
         const encryptedData = JSON.parse(encryptedDataString);
-        return decryptDataValues(encryptedData); 
+        return decryptDataValues(encryptedData);
     } catch (error) {
         console.error('IPFS Download Error:', error);
         throw new Error('Failed to retrieve data from IPFS');
+    }
+};
+
+// Upload prescription data to IPFS
+export const uploadPrescriptionToIPFS = async (prescriptionData) => {
+    try {
+        if (!ipfsClient) await initializeIPFSClient();
+
+        const encryptedData = encryptDataValues(prescriptionData);
+        const result = await ipfsClient.add(JSON.stringify(encryptedData));
+        return result.path; // This is the CID
+    } catch (error) {
+        console.error('IPFS Upload Error:', error);
+        throw new Error('Failed to upload prescription data to IPFS');
     }
 };

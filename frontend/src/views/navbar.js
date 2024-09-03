@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { initWeb3 } from '../utils/web3utils';
 import { getUserRoleAndAttributes } from '../utils/userqueryutils';
@@ -78,6 +78,9 @@ const Navbar = () => {
                             <li className="nav-item">
                                 <Link className="nav-link" to="/query-page">Account Query</Link>
                             </li>
+                            <li className="nav-item">
+                                <Link className="nav-link" to="/ipfs-query">IPFS Query</Link>
+                            </li>
                         </>
                     )}
                     {role === 'Regulatory Authority' && (
@@ -93,6 +96,9 @@ const Navbar = () => {
                             </li>
                             <li className="nav-item">
                                 <Link className="nav-link" to="/query-page">Account Query</Link>
+                            </li>
+                            <li className="nav-item">
+                                <Link className="nav-link" to="/ipfs-query">IPFS Query</Link>
                             </li>
                         </>
                     )}

@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { initWeb3 } from '../utils/web3utils';
-import { getUserRoleAndAttributes } from '../utils/userqueryutils'; // Adjust path if necessary
+import { getUserRoleAndAttributes } from '../utils/userqueryutils';
+import { uploadToIPFS } from '../utils/ipfsutils';
 
 const PrescriptionForm = () => {
     const [physicianAddress, setPhysicianAddress] = useState('');
     const [patientAddress, setPatientAddress] = useState('');
     const [isPatientRegistered, setIsPatientRegistered] = useState(null);
     const [patientAttributes, setPatientAttributes] = useState({});
-    const [diagnosis, setDiagnosis] = useState('');
     const [drugs, setDrugs] = useState([{ name: '', sig: '', mitte: '', mitteUnit: 'tablets', repeat: '' }]);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
@@ -51,15 +51,29 @@ const PrescriptionForm = () => {
 
             if (role === 'Patient') {
                 setIsPatientRegistered(true);
-                setPatientAttributes(attributes); // Set patient attributes
+                setPatientAttributes(attributes); 
             } else {
                 setIsPatientRegistered(false);
-                setPatientAttributes({}); // Clear attributes if not a patient
+                setPatientAttributes({}); 
             }
         } catch (err) {
             console.error("Error verifying patient address:", err);
             setError("Error verifying patient address");
         }
+    };
+
+    const prepareDataForIPFS = () => {
+        return {
+            physicianAddress,
+            patientAddress,
+            drugs: drugs.map(drug => ({
+                name: drug.name,
+                sig: drug.sig,
+                mitte: drug.mitte,
+                mitteUnit: drug.mitteUnit,
+                repeat: drug.repeat
+            }))
+        };
     };
 
     const handleSubmit = async (e) => {
@@ -69,7 +83,8 @@ const PrescriptionForm = () => {
         setSuccess(null);
 
         try {
-            if (!physicianAddress || !patientAddress || !diagnosis) {
+            // Check that all required fields are filled
+            if (!physicianAddress || !patientAddress || drugs.some(drug => !drug.name || !drug.sig || !drug.mitte || !drug.repeat)) {
                 throw new Error('All fields are required');
             }
 
@@ -77,17 +92,15 @@ const PrescriptionForm = () => {
                 throw new Error('Patient is not registered');
             }
 
-            // Assuming drugs are valid, you would add further checks or processing here
-            console.log({
-                physicianAddress,
-                patientAddress,
-                diagnosis,
-                drugs
-            });
+            // Prepare the data to be uploaded to IPFS
+            const dataToUpload = prepareDataForIPFS();
+            console.log(dataToUpload);
+            const ipfsCID = await uploadToIPFS(dataToUpload);
+
+            console.log('Data uploaded to IPFS with CID:', ipfsCID);
 
             // Reset form state after successful submission
             setPatientAddress('');
-            setDiagnosis('');
             setDrugs([{ name: '', sig: '', mitte: '', mitteUnit: 'tablets', repeat: '' }]);
             setSuccess('Prescription submitted successfully!');
         } catch (err) {
@@ -143,19 +156,6 @@ const PrescriptionForm = () => {
                             </table>
                         </div>
                     )}
-                </div>
-                <div className="form-group mb-3">
-                    <label htmlFor="diagnosis" className="smallfont">Diagnosis</label>
-                    <input
-                        type="text"
-                        className="form-control form-control-sm"
-                        id="diagnosis"
-                        value={diagnosis}
-                        onChange={(e) => setDiagnosis(e.target.value)}
-                        required
-                        autoComplete='off'
-                        tabIndex={2}
-                    />
                 </div>
 
                 {drugs.map((drug, index) => (
@@ -218,14 +218,13 @@ const PrescriptionForm = () => {
                                                 <option value="tablets">tablets</option>
                                                 <option value="capsules">capsules</option>
                                                 <option value="ml">ml</option>
-                                                <option value="units">units</option>
-                                                <option value="mg">mg</option>
                                                 <option value="g">g</option>
+                                                <option value="mg">mg</option>
                                             </select>
                                         </div>
                                     </div>
                                     <div className="form-group mb-2 flex-grow-1">
-                                        <label htmlFor={`drugRepeat${index}`} className="smallfont">Repeat (Days)</label>
+                                        <label htmlFor={`drugRepeat${index}`} className="smallfont">Repeat (Times)</label>
                                         <input
                                             type="number"
                                             className="form-control form-control-sm"
@@ -240,16 +239,16 @@ const PrescriptionForm = () => {
                                     </div>
                                 </div>
                             </div>
-                            <div className="col-12 col-md-6 mb-2">
-                                <div className="form-group">
-                                    <label htmlFor={`drugSig${index}`} className="smallfont">SIG (Instructions)</label>
+                            <div className="col-12 col-md-6">
+                                <div className="form-group mb-2">
+                                    <label htmlFor={`drugSig${index}`} className="smallfont">Sig (Instructions)</label>
                                     <textarea
                                         className="form-control form-control-sm"
                                         id={`drugSig${index}`}
                                         name="sig"
+                                        rows="4"
                                         value={drug.sig}
                                         onChange={(e) => handleDrugChange(index, e)}
-                                        rows="4"
                                         required
                                         autoComplete='off'
                                         tabIndex={3 + index * 6}
@@ -259,28 +258,28 @@ const PrescriptionForm = () => {
                         </div>
                     </div>
                 ))}
-                <hr className="mb-1" /> 
-                <div className="d-flex justify-content-between mt-3">
+                <div className="d-flex justify-content-between">
                     <button
                         type="button"
-                        className="btn btn-sm btn-success"
+                        className="btn btn-sm btn-secondary"
                         onClick={addDrug}
-                        tabIndex={100}
+                        tabIndex={-1}
                     >
-                        Add Another Drug
+                        Add Drug
                     </button>
                     <button
                         type="submit"
                         className="btn btn-sm btn-primary"
-                        disabled={loading || isPatientRegistered !== true} // Disable if not verified
-                        tabIndex={101}
+                        disabled={loading || !isPatientRegistered}
+                        tabIndex={-1}
                     >
                         {loading ? 'Submitting...' : 'Submit Prescription'}
                     </button>
                 </div>
+
+                {error && <div className="alert alert-danger mt-3" role="alert">{error}</div>}
+                {success && <div className="alert alert-success mt-3" role="alert">{success}</div>}
             </form>
-            {error && <p className="text-danger mt-3">{error}</p>}
-            {success && <p className="text-success mt-3">{success}</p>}
         </div>
     );
 };
