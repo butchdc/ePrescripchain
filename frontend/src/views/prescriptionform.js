@@ -27,13 +27,14 @@ const PrescriptionForm = () => {
         };
 
         fetchUserAddress();
-    }, []); // Empty dependency array ensures this runs only once on mount
+    }, []);
 
     const handleDrugChange = (index, e) => {
         const { name, value } = e.target;
         const newDrugs = [...drugs];
         newDrugs[index][name] = value;
         setDrugs(newDrugs);
+        setError(null);
     };
 
     const addDrug = () => {
@@ -51,7 +52,8 @@ const PrescriptionForm = () => {
 
             if (role === 'Patient') {
                 setIsPatientRegistered(true);
-                setPatientAttributes(attributes); 
+                const { name, patientAddress, gender, dateOfBirth, nhiNumber } = attributes;
+                setPatientAttributes({ name, patientAddress, gender, dateOfBirth, nhiNumber }); 
             } else {
                 setIsPatientRegistered(false);
                 setPatientAttributes({}); 
@@ -103,6 +105,7 @@ const PrescriptionForm = () => {
             setPatientAddress('');
             setDrugs([{ name: '', sig: '', mitte: '', mitteUnit: 'tablets', repeat: '' }]);
             setSuccess('Prescription submitted successfully!');
+            setError(null);
         } catch (err) {
             setError(err.message);
         } finally {
@@ -143,13 +146,13 @@ const PrescriptionForm = () => {
                     )}
                     {isPatientRegistered === true && (
                         <div className="mt-3">
-                            <div className='smallfont'>Patient Details</div>
+                            <div className='smallfont'>Patient Information</div>
                             <table className="table table-sm table-striped">
                                 <tbody>
                                     {Object.entries(patientAttributes).map(([key, value]) => (
                                         <tr key={key}>
-                                            <td className='smallfont col-2 text-secondary'>{key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1').trim()}</td>
-                                            <td className='mediumfont border-start'>{value}</td>
+                                            <td style={{fontSize: 14, fontWeight: 500, color: '#00558C'}} className='col-1'>{key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1').trim()}</td>
+                                            <td className='border-start col-4'>{value}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -276,7 +279,6 @@ const PrescriptionForm = () => {
                         {loading ? 'Submitting...' : 'Submit Prescription'}
                     </button>
                 </div>
-
                 {error && <div className="alert alert-danger mt-3" role="alert">{error}</div>}
                 {success && <div className="alert alert-success mt-3" role="alert">{success}</div>}
             </form>

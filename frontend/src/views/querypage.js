@@ -11,18 +11,6 @@ const QueryPage = () => {
     const [error, setError] = useState(null);
 
     const { role: userRole, loading: roleLoading, error: roleError } = useUserRole();
-    const navigate = useNavigate();
-
-    useEffect(() => {
-        if (roleLoading) return;
-        if (roleError) {
-            setError(roleError);
-            return;
-        }
-        if (userRole !== 'Administrator' && userRole !== 'Regulatory Authority') {
-            navigate('/'); // Redirect to home if user does not have access
-        }
-    }, [roleLoading, roleError, userRole, navigate]);
 
     const handleChange = (e) => {
         setAddress(e.target.value);
@@ -37,8 +25,6 @@ const QueryPage = () => {
 
         try {
             const { role, attributes } = await getUserRoleAndAttributes(address);
-            console.log('Fetched Role:', role); // Log role for debugging
-            console.log('Fetched Attributes:', attributes); // Log attributes for debugging
             setRole(role);
             setAttributes(attributes);
         } catch (err) {
@@ -78,11 +64,9 @@ const QueryPage = () => {
                     {error && <p className="text-danger mt-3">{error}</p>}
                     {role && (
                         <div className="mt-3">
-                            <h5>Role:</h5>
-                            <p>{role}</p>
                             {attributes && Object.keys(attributes).length > 0 ? (
                                 <div>
-                                    <h5>Attributes:</h5>
+                                    <h5>Details</h5>
                                     <table className="table table-sm table-striped">
                                         <thead className='table-info'>
                                             <tr>

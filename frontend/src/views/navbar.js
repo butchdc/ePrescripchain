@@ -23,6 +23,7 @@ const Navbar = () => {
                 const { role, attributes } = await getUserRoleAndAttributes(address);
                 setRole(role);
                 setAttributes(attributes);
+                
                 if(role === 'Regulatory Authority'){
                     setLine1(attributes.name);
                     setLine2(`${attributes.organization}`);
@@ -45,7 +46,6 @@ const Navbar = () => {
                 }
 
             } catch (error) {
-                console.error("Error fetching account data:", error);
                 setRole('Error');
             }
         };
@@ -55,7 +55,10 @@ const Navbar = () => {
 
     return (
         <nav className="navbar navbar-expand-lg navbar-dark bgcolor1 ps-3 pe-3 m-0">
-            <Link className="navbar-brand" to="/">e-Prescription DApp</Link>
+            <Link className="navbar-brand" to="/">
+                <img src="/images/logo.png" className='pe-2' style={{ height: '40px', width: 'auto' }} />
+                e-Prescription DApp
+            </Link>
             <button 
                 className="navbar-toggler" 
                 type="button" 
@@ -113,7 +116,7 @@ const Navbar = () => {
                     <div className='m-0 p-0'>{line1} </div>                  
                     <div className='smallfont txcolor1 m-0 p-0'>{line2}</div> 
                     <div className='smallfont'>Current Role: {role}</div>
-                    <div style={{fontSize:6}}>{userAddress}</div>
+                    {/* <div style={{fontSize:6}}>{userAddress}</div> */}
                 </div>
                 : <div className="text-light smallfont">{role}</div>
                 }
