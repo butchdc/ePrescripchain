@@ -8,10 +8,12 @@ const ConfigPage = () => {
         registrationContractABI: '',
         prescriptionContractAddress: '',
         prescriptionContractABI: '',
-        ipfsClientURL: ''
+        ipfsClientURL: '',
+        blockchainServerURL: '' // New field
     });
     const [isEditing, setIsEditing] = useState(false);
     const [error, setError] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
 
     const apiBaseURL = process.env.REACT_APP_API_BASE_URL;
 
@@ -32,11 +34,10 @@ const ConfigPage = () => {
             }
             return response.data.value || '';
         } catch (error) {
-            if (error.response && error.response.status === 404) {
-                setError(`The setting '${key}' was not found.`);
-            } else {
-                setError(`Error fetching ${key}: ${error.message}`);
-            }
+            const message = error.response?.status === 404
+                ? `The setting '${key}' was not found.`
+                : `Error fetching ${key}: ${error.message}`;
+            setError(message);
             return '';
         }
     }, [apiBaseURL]);
@@ -46,18 +47,22 @@ const ConfigPage = () => {
             if (!apiBaseURL) return;
 
             try {
-                const addressReg = await fetchSetting('registrationContractAddress');
-                const abiReg = await fetchSetting('registrationContractABI');
-                const addressPres = await fetchSetting('prescriptionContractAddress');
-                const abiPres = await fetchSetting('prescriptionContractABI');
-                const url = await fetchSetting('ipfsClientURL');
-                
+                const [addressReg, abiReg, addressPres, abiPres, url, blockchainUrl] = await Promise.all([
+                    fetchSetting('registrationContractAddress'),
+                    fetchSetting('registrationContractABI'),
+                    fetchSetting('prescriptionContractAddress'),
+                    fetchSetting('prescriptionContractABI'),
+                    fetchSetting('ipfsClientURL'),
+                    fetchSetting('blockchainServerURL') // New field
+                ]);
+
                 setSettings({
                     registrationContractAddress: decryptValue(addressReg),
                     registrationContractABI: decryptValue(abiReg),
                     prescriptionContractAddress: decryptValue(addressPres),
                     prescriptionContractABI: decryptValue(abiPres),
-                    ipfsClientURL: decryptValue(url)
+                    ipfsClientURL: decryptValue(url),
+                    blockchainServerURL: decryptValue(blockchainUrl) // New field
                 });
             } catch (error) {
                 console.error('Error fetching settings:', error);
@@ -81,13 +86,14 @@ const ConfigPage = () => {
             return;
         }
 
-        // Encrypt the values before sending them
+        setIsSaving(true);
         const encryptedSettings = {
             registrationContractAddress: encryptValue(settings.registrationContractAddress),
             registrationContractABI: encryptValue(settings.registrationContractABI),
             prescriptionContractAddress: encryptValue(settings.prescriptionContractAddress),
             prescriptionContractABI: encryptValue(settings.prescriptionContractABI),
-            ipfsClientURL: encryptValue(settings.ipfsClientURL)
+            ipfsClientURL: encryptValue(settings.ipfsClientURL),
+            blockchainServerURL: encryptValue(settings.blockchainServerURL) // New field
         };
 
         try {
@@ -96,89 +102,24 @@ const ConfigPage = () => {
                 axios.put(`${apiBaseURL}/registrationContractABI`, { value: encryptedSettings.registrationContractABI }),
                 axios.put(`${apiBaseURL}/prescriptionContractAddress`, { value: encryptedSettings.prescriptionContractAddress }),
                 axios.put(`${apiBaseURL}/prescriptionContractABI`, { value: encryptedSettings.prescriptionContractABI }),
-                axios.put(`${apiBaseURL}/ipfsClientURL`, { value: encryptedSettings.ipfsClientURL })
+                axios.put(`${apiBaseURL}/ipfsClientURL`, { value: encryptedSettings.ipfsClientURL }),
+                axios.put(`${apiBaseURL}/blockchainServerURL`, { value: encryptedSettings.blockchainServerURL }) // New field
             ]);
             setIsEditing(false);
             alert('Settings updated successfully');
         } catch (error) {
-            if (error.response && error.response.status === 404) {
-                setError('Failed to update some settings. One or more endpoints were not found.');
-            } else {
-                console.error('Error updating settings:', error);
-                setError('Failed to update settings: ' + (error.response?.data?.message || error.message));
-            }
+            setError('Failed to update settings: ' + (error.response?.data?.message || error.message));
+        } finally {
+            setIsSaving(false);
         }
     };
 
     return (
-        <div className="container my-4">
-            <h1 className="mb-4">Settings</h1>
+        <div className="container my-4 bgcolor2">
+            <h4 className="">Settings</h4>
             {error && <div className="alert alert-danger">{error}</div>}
             <form>
-                <div className="row mb-3">
-                    {/* Column 1: Registration Contract */}
-                    <div className="col-md-6">
-                        <div className="form-floating mb-3">
-                            <input
-                                type="text"
-                                className="form-control"
-                                id="registrationContractAddress"
-                                name="registrationContractAddress"
-                                value={settings.registrationContractAddress}
-                                onChange={handleChange}
-                                disabled={!isEditing}
-                                required
-                            />
-                            <label htmlFor="registrationContractAddress">Registration Contract Address</label>
-                        </div>
-
-                        <div className="mb-3">
-                            <label htmlFor="registrationContractABI" className="form-label">Registration Contract ABI:</label>
-                            <textarea
-                                className="form-control"
-                                id="registrationContractABI"
-                                name="registrationContractABI"
-                                rows="5"
-                                value={settings.registrationContractABI}
-                                onChange={handleChange}
-                                disabled={!isEditing}
-                                required
-                            />
-                        </div>
-                    </div>
-
-                    {/* Column 2: Prescription Contract */}
-                    <div className="col-md-6">
-                        <div className="form-floating mb-3">
-                            <input
-                                type="text"
-                                className="form-control"
-                                id="prescriptionContractAddress"
-                                name="prescriptionContractAddress"
-                                value={settings.prescriptionContractAddress}
-                                onChange={handleChange}
-                                disabled={!isEditing}
-                                required
-                            />
-                            <label htmlFor="prescriptionContractAddress">Prescription Contract Address</label>
-                        </div>
-
-                        <div className="mb-3">
-                            <label htmlFor="prescriptionContractABI" className="form-label">Prescription Contract ABI:</label>
-                            <textarea
-                                className="form-control"
-                                id="prescriptionContractABI"
-                                name="prescriptionContractABI"
-                                rows="5"
-                                value={settings.prescriptionContractABI}
-                                onChange={handleChange}
-                                disabled={!isEditing}
-                                required
-                            />
-                        </div>
-                    </div>
-                </div>
-
+                {/* URL Fields at the Top */}
                 <div className="mb-3 form-floating">
                     <input
                         type="text"
@@ -193,11 +134,95 @@ const ConfigPage = () => {
                     <label htmlFor="ipfsClientURL">IPFS Client URL</label>
                 </div>
 
+                <div className="mb-3 form-floating">
+                    <input
+                        type="text"
+                        className="form-control"
+                        id="blockchainServerURL"
+                        name="blockchainServerURL"
+                        value={settings.blockchainServerURL}
+                        onChange={handleChange}
+                        disabled={!isEditing}
+                        required
+                    />
+                    <label htmlFor="blockchainServerURL">Blockchain Server URL</label>
+                </div>
+
+                {/* Other Fields */}
+                <div className="mb-3 form-floating">
+                    <input
+                        type="text"
+                        className="form-control"
+                        id="registrationContractAddress"
+                        name="registrationContractAddress"
+                        value={settings.registrationContractAddress}
+                        onChange={handleChange}
+                        disabled={!isEditing}
+                        required
+                    />
+                    <label htmlFor="registrationContractAddress">Registration Contract Address</label>
+                </div>
+
+                <div className="mb-3">
+                    <label htmlFor="registrationContractABI" className="form-label">Registration Contract ABI</label>
+                    <textarea
+                        className="form-control"
+                        id="registrationContractABI"
+                        name="registrationContractABI"
+                        rows="5"
+                        value={settings.registrationContractABI}
+                        onChange={handleChange}
+                        disabled={!isEditing}
+                        required
+                    />
+                </div>
+
+                <div className="mb-3 form-floating">
+                    <input
+                        type="text"
+                        className="form-control"
+                        id="prescriptionContractAddress"
+                        name="prescriptionContractAddress"
+                        value={settings.prescriptionContractAddress}
+                        onChange={handleChange}
+                        disabled={!isEditing}
+                        required
+                    />
+                    <label htmlFor="prescriptionContractAddress">Prescription Contract Address</label>
+                </div>
+
+                <div className="mb-3">
+                    <label htmlFor="prescriptionContractABI" className="form-label">Prescription Contract ABI</label>
+                    <textarea
+                        className="form-control"
+                        id="prescriptionContractABI"
+                        name="prescriptionContractABI"
+                        rows="5"
+                        value={settings.prescriptionContractABI}
+                        onChange={handleChange}
+                        disabled={!isEditing}
+                        required
+                    />
+                </div>
+
                 <div className="mb-3">
                     {isEditing ? (
-                        <button type="button" className="btn btn-primary" onClick={handleSave}>Save</button>
+                        <button 
+                            type="button" 
+                            className="btn btn-primary" 
+                            onClick={handleSave}
+                            disabled={isSaving}
+                        >
+                            {isSaving ? 'Saving...' : 'Save'}
+                        </button>
                     ) : (
-                        <button type="button" className="btn btn-secondary" onClick={() => setIsEditing(true)}>Edit</button>
+                        <button 
+                            type="button" 
+                            className="btn btn-secondary" 
+                            onClick={() => setIsEditing(true)}
+                        >
+                            Edit
+                        </button>
                     )}
                 </div>
             </form>
