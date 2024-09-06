@@ -70,7 +70,7 @@ const decryptDataValues = (encryptedData) => {
 // Fetch IPFS client URL from backend server using axios
 const fetchIPFSClientUrl = async () => {
     try {
-        const response = await axios.get(`${apiBaseURL}/ipfsClientURL`);
+        const response = await axios.get(`${apiBaseURL}settings/ipfsClientURL`);
         return response.data.value;
     } catch (error) {
         console.error('Failed to fetch IPFS client URL:', error);
@@ -151,5 +151,15 @@ export const uploadPrescriptionToIPFS = async (prescriptionData) => {
     } catch (error) {
         console.error('IPFS Upload Error:', error);
         throw new Error('Failed to upload prescription data to IPFS');
+    }
+};
+
+export const saveEntityToDB = async (entity, data) => {
+    try {
+        const response = await axios.post(`${apiBaseURL}entities/${entity}`, data);
+        return response.data;
+    } catch (error) {
+        console.error('Error saving entity to database:', error.message);
+        throw new Error('Failed to save entity to the database');
     }
 };

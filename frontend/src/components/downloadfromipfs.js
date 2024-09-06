@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { downloadFromIPFS } from '../utils/ipfsutils'; 
+import { downloadFromIPFS } from '../utils/apiutils'; 
 
 const DownloadFromIPFS = () => {
     const [cid, setCid] = useState('');

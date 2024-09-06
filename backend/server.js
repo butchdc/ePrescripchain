@@ -7,8 +7,8 @@ const settingsRoutes = require('./routes/settings');
 const entitiesRoutes = require('./routes/entities');
 
 // Initialize databases
-require('./db/initSettingsDb');
-require('./db/initEntitiesDb');
+require('./initdb/initSettingsDb');
+require('./initdb/initEntitiesDb');
 
 // Start the event listener
 //require('./listeners/eventListener');

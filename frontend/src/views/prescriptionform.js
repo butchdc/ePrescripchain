@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { initWeb3 } from '../utils/web3utils';
 import { getUserRoleAndAttributes } from '../utils/userqueryutils';
-import { uploadToIPFS } from '../utils/ipfsutils';
+import { uploadToIPFS } from '../utils/apiutils';
 
 const PrescriptionForm = () => {
     const [physicianAddress, setPhysicianAddress] = useState('');

@@ -3,7 +3,7 @@ const router = express.Router();
 const sqlite3 = require('sqlite3').verbose();
 
 // Create a connection to the database
-const db = new sqlite3.Database('./entities.db', (err) => {
+const db = new sqlite3.Database('./db/entities.db', (err) => {
   if (err) {
     console.error('Error opening database:', err.message);
   } else {
@@ -22,6 +22,20 @@ function fetchEntities(tableName, res) {
       return;
     }
     res.json(rows);
+  });
+}
+
+// Helper function to count records in the database
+function countEntities(tableName, res) {
+  const query = `SELECT COUNT(*) AS count FROM ${tableName}`;
+
+  db.get(query, [], (err, row) => {
+    if (err) {
+      console.error(`Error counting data from ${tableName}:`, err.message);
+      res.status(500).json({ error: 'An error occurred while counting data.' });
+      return;
+    }
+    res.json({ count: row.count });
   });
 }
 
@@ -93,6 +107,18 @@ router.delete('/:entity/:address', (req, res) => {
     }
     res.status(200).json({ message: `${entity.slice(0, -1)} deleted successfully.` });
   });
+});
+
+// Route to get count of entities
+router.get('/count/:entity', (req, res) => {
+  const { entity } = req.params;
+  const validEntities = ['physicians', 'patients', 'pharmacies', 'regulatory_authorities'];
+  
+  if (!validEntities.includes(entity)) {
+    return res.status(400).json({ error: 'Invalid entity type.' });
+  }
+
+  countEntities(entity, res);
 });
 
 module.exports = router;

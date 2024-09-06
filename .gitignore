@@ -3,6 +3,6 @@
 # dependencies
 /frontend/node_modules
 /backend/node_modules
-/backend/settings.db
+/backend/db
 /frontend/.env
 /ipfs/data

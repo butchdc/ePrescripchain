@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { uploadToIPFS } from '../utils/ipfsutils'; 
+import { uploadToIPFS, saveEntityToDB } from '../utils/apiutils'; 
 import { initWeb3, initContracts } from '../utils/web3utils'; 
 import { getUserRoleAndAttributes } from '../utils/userqueryutils'; 
 
@@ -54,6 +54,13 @@ const PharmacyRegistration = () => {
             const userAddress = accounts[0];
 
             await registrationContract.methods.PharmacyRegistration(address, ipfsHash).send({ from: userAddress });
+
+            await saveEntityToDB('pharmacies',{
+                address,
+                ipfsHash,
+                createdBy: userAddress,
+                date: Date.now(),
+            });
 
             setFormState({
                 address: '',

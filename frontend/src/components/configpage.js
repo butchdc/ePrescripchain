@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { encryptValue, decryptValue } from '../utils/ipfsutils'; 
+import { encryptValue, decryptValue } from '../utils/apiutils'; 
 
 const ConfigPage = () => {
     const [settings, setSettings] = useState({
@@ -24,7 +24,7 @@ const ConfigPage = () => {
         }
 
         try {
-            const response = await axios.get(`${apiBaseURL}/${key}`);
+            const response = await axios.get(`${apiBaseURL}settings/${key}`);
             if (response.data.error) {
                 if (response.data.error.includes('Setting not found')) {
                     return '';
@@ -98,12 +98,12 @@ const ConfigPage = () => {
 
         try {
             await axios.all([
-                axios.put(`${apiBaseURL}/registrationContractAddress`, { value: encryptedSettings.registrationContractAddress }),
-                axios.put(`${apiBaseURL}/registrationContractABI`, { value: encryptedSettings.registrationContractABI }),
-                axios.put(`${apiBaseURL}/prescriptionContractAddress`, { value: encryptedSettings.prescriptionContractAddress }),
-                axios.put(`${apiBaseURL}/prescriptionContractABI`, { value: encryptedSettings.prescriptionContractABI }),
-                axios.put(`${apiBaseURL}/ipfsClientURL`, { value: encryptedSettings.ipfsClientURL }),
-                axios.put(`${apiBaseURL}/blockchainServerURL`, { value: encryptedSettings.blockchainServerURL }) // New field
+                axios.put(`${apiBaseURL}settings/registrationContractAddress`, { value: encryptedSettings.registrationContractAddress }),
+                axios.put(`${apiBaseURL}settings/registrationContractABI`, { value: encryptedSettings.registrationContractABI }),
+                axios.put(`${apiBaseURL}settings/prescriptionContractAddress`, { value: encryptedSettings.prescriptionContractAddress }),
+                axios.put(`${apiBaseURL}settings/prescriptionContractABI`, { value: encryptedSettings.prescriptionContractABI }),
+                axios.put(`${apiBaseURL}settings/ipfsClientURL`, { value: encryptedSettings.ipfsClientURL }),
+                axios.put(`${apiBaseURL}settings/blockchainServerURL`, { value: encryptedSettings.blockchainServerURL }) // New field
             ]);
             setIsEditing(false);
             alert('Settings updated successfully');

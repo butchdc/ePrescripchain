@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { uploadToIPFS } from '../utils/ipfsutils'; 
+import { uploadToIPFS, saveEntityToDB } from '../utils/apiutils'; 
 import { getUserRoleAndAttributes } from '../utils/userqueryutils'; 
 import { initWeb3, initContracts } from '../utils/web3utils'; 
 
@@ -52,6 +52,13 @@ const RegulatoryAuthorityRegistration = () => {
             const userAddress = accounts[0];
 
             await registrationContract.methods.registerRegulatoryAuthority(address, ipfsHash).send({ from: userAddress });
+
+            await saveEntityToDB('regulatory_authorities',{
+                address,
+                ipfsHash,
+                createdBy: userAddress,
+                date: Date.now(),
+            });
 
             setSuccess('Regulatory authority registered successfully!');
             setFormState({

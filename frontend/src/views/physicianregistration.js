@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { uploadToIPFS } from '../utils/ipfsutils'; 
+import { uploadToIPFS, saveEntityToDB } from '../utils/apiutils'; 
 import { initWeb3, initContracts } from '../utils/web3utils'; 
 import { getUserRoleAndAttributes } from '../utils/userqueryutils'; 
 
@@ -55,6 +55,15 @@ const PhysicianRegistration = () => {
 
             await registrationContract.methods.PhysicianRegistration(address, ipfsHash).send({ from: userAddress });
 
+            await saveEntityToDB('physicians',{
+                address,
+                ipfsHash,
+                createdBy: userAddress,
+                date: Date.now(),
+            });
+
+            setSuccess('Physician registered successfully!');
+
             setFormState({
                 address: '',
                 name: '',
@@ -63,7 +72,6 @@ const PhysicianRegistration = () => {
                 nzmcNo: '',
             });
 
-            setSuccess('Physician registered successfully!');
             setError(null);
         } catch (err) {
             setError(err.message);

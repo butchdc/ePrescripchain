@@ -1,6 +1,6 @@
 import Web3 from 'web3';
 import axios from 'axios';
-import { decryptValue } from '../utils/ipfsutils'; 
+import { decryptValue } from './apiutils'; 
 
 // Retrieve the base URL for the API from environment variables
 const apiBaseURL = process.env.REACT_APP_API_BASE_URL;
@@ -19,7 +19,7 @@ export const initWeb3 = async () => {
 // Function to fetch a single setting from the backend
 const fetchSetting = async (key) => {
     try {
-        const response = await axios.get(`${apiBaseURL}/${key}`);
+        const response = await axios.get(`${apiBaseURL}settings/${key}`);
         return response.data.value;
     } catch (error) {
         throw new Error(`Failed to fetch ${key}: ${error.message}`);

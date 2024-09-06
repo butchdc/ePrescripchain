@@ -1,4 +1,4 @@
-import { downloadFromIPFS } from '../utils/ipfsutils';
+import { downloadFromIPFS } from './apiutils';
 import { initWeb3, initContracts } from '../utils/web3utils';
 
 const fetchAttributes = async (contractMethod, address) => {

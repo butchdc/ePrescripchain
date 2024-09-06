@@ -2,27 +2,13 @@ const express = require('express');
 const router = express.Router();
 const sqlite3 = require('sqlite3').verbose();
 
-const db = new sqlite3.Database('./settings.db', (err) => {
+const db = new sqlite3.Database('./db/settings.db', (err) => {
   if (err) {
     console.error('Error opening database:', err.message);
   } else {
     console.log('Connected to Settings DB.');
   }
 });
-
-// Get all setting
-router.get('/', (req, res) => {
-  db.get('SELECT * FROM settings', (err, row) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-    } else if (row) {
-      res.json({ value: row.value });
-    } else {
-      res.status(404).json({ error: 'Setting not found' });
-    }
-  });
-});
-
 
 // Get a specific setting
 router.get('/:key', (req, res) => {
