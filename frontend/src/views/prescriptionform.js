@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { initWeb3 } from '../utils/web3utils';
+import { initWeb3, initContracts } from '../utils/web3utils';
 import { getUserRoleAndAttributes } from '../utils/userqueryutils';
-import { uploadToIPFS } from '../utils/apiutils';
+import { uploadToIPFS, savePrescriptionToDB } from '../utils/apiutils';
 
 const PrescriptionForm = () => {
     const [physicianAddress, setPhysicianAddress] = useState('');
@@ -97,9 +97,28 @@ const PrescriptionForm = () => {
             // Prepare the data to be uploaded to IPFS
             const dataToUpload = prepareDataForIPFS();
             console.log(dataToUpload);
-            const ipfsCID = await uploadToIPFS(dataToUpload);
+            const ipfsHash = await uploadToIPFS(dataToUpload);
 
-            console.log('Data uploaded to IPFS with CID:', ipfsCID);
+            // Initialize Web3 and contract instances
+            const web3 = await initWeb3();
+            const { prescriptionContract } = await initContracts(web3);
+
+            // Call prescriptionCreation method on the smart contract
+            const tx = await prescriptionContract.methods.prescriptionCreation(patientAddress, ipfsHash).send({ from: physicianAddress });
+
+            // Extract the prescription ID from the event
+            const prescriptionCreatedEvent = tx.events.PrescriptionCreated.returnValues;
+            const prescriptionID = prescriptionCreatedEvent.prescriptionID;
+    
+            const prescriptionIDNumber = Number(prescriptionID)
+            // Save the prescription details to the database
+            await savePrescriptionToDB({
+                address: patientAddress,
+                ipfsHash,
+                createdBy: physicianAddress,
+                date: Date.now(),
+                prescriptionID: prescriptionIDNumber, 
+            });
 
             // Reset form state after successful submission
             setPatientAddress('');
@@ -114,8 +133,8 @@ const PrescriptionForm = () => {
     };
 
     return (
-        <div className="container mt-4 bgcolor2">
-            <h2 className="mb-3">Prescription Form</h2>
+        <div className="container mt-3 bgcolor2">
+            <h4 className="mb-2">Prescription Form</h4>
             <form onSubmit={handleSubmit} className="needs-validation" noValidate>
                 <div className="form-group mb-3">
                     <label htmlFor="patientAddress" className="smallfont">Patient Address</label>

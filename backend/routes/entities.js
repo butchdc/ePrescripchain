@@ -1,3 +1,5 @@
+// routes/entities.js
+
 const express = require('express');
 const router = express.Router();
 const sqlite3 = require('sqlite3').verbose();
@@ -11,11 +13,26 @@ const db = new sqlite3.Database('./db/entities.db', (err) => {
   }
 });
 
+// List of valid entities for validation
+const validEntities = ['physicians', 'patients', 'pharmacies', 'regulatory_authorities', 'prescriptions'];
+
 // Helper function to fetch data from the database
-function fetchEntities(tableName, res) {
-  const query = `SELECT * FROM ${tableName}`;
-  
-  db.all(query, [], (err, rows) => {
+function fetchEntities(tableName, res, conditions = {}) {
+  if (!validEntities.includes(tableName)) {
+    return res.status(400).json({ error: 'Invalid entity type.' });
+  }
+
+  let query = `SELECT * FROM ${tableName}`;
+  const params = [];
+
+  if (Object.keys(conditions).length > 0) {
+    query += ' WHERE ' + Object.keys(conditions).map((key, i) => `${key} = ?`).join(' AND ');
+    params.push(...Object.values(conditions));
+  }
+
+  console.log('Executing query:', query, 'with params:', params);
+
+  db.all(query, params, (err, rows) => {
     if (err) {
       console.error(`Error fetching data from ${tableName}:`, err.message);
       res.status(500).json({ error: 'An error occurred while fetching data.' });
@@ -27,6 +44,10 @@ function fetchEntities(tableName, res) {
 
 // Helper function to count records in the database
 function countEntities(tableName, res) {
+  if (!validEntities.includes(tableName)) {
+    return res.status(400).json({ error: 'Invalid entity type.' });
+  }
+
   const query = `SELECT COUNT(*) AS count FROM ${tableName}`;
 
   db.get(query, [], (err, row) => {
@@ -42,12 +63,9 @@ function countEntities(tableName, res) {
 // Route to get all entities
 router.get('/:entity', (req, res) => {
   const { entity } = req.params;
-  const validEntities = ['physicians', 'patients', 'pharmacies', 'regulatory_authorities'];
-  
   if (!validEntities.includes(entity)) {
     return res.status(400).json({ error: 'Invalid entity type.' });
   }
-
   fetchEntities(entity, res);
 });
 
@@ -56,8 +74,6 @@ router.post('/:entity', (req, res) => {
   const { entity } = req.params;
   const { address, ipfsHash, createdBy, date } = req.body;
 
-  const validEntities = ['physicians', 'patients', 'pharmacies', 'regulatory_authorities'];
-  
   if (!validEntities.includes(entity)) {
     return res.status(400).json({ error: 'Invalid entity type.' });
   }
@@ -88,8 +104,6 @@ router.post('/:entity', (req, res) => {
 // Route to delete an entity by address
 router.delete('/:entity/:address', (req, res) => {
   const { entity, address } = req.params;
-  const validEntities = ['physicians', 'patients', 'pharmacies', 'regulatory_authorities'];
-  
   if (!validEntities.includes(entity)) {
     return res.status(400).json({ error: 'Invalid entity type.' });
   }
@@ -112,12 +126,9 @@ router.delete('/:entity/:address', (req, res) => {
 // Route to get count of entities
 router.get('/count/:entity', (req, res) => {
   const { entity } = req.params;
-  const validEntities = ['physicians', 'patients', 'pharmacies', 'regulatory_authorities'];
-  
   if (!validEntities.includes(entity)) {
     return res.status(400).json({ error: 'Invalid entity type.' });
   }
-
   countEntities(entity, res);
 });
 

@@ -163,3 +163,13 @@ export const saveEntityToDB = async (entity, data) => {
         throw new Error('Failed to save entity to the database');
     }
 };
+
+export const savePrescriptionToDB = async (data) => {
+    try {
+        const response = await axios.post(`${apiBaseURL}prescriptions`, data);
+        return response.data;
+    } catch (error) {
+        console.error('Error saving prescription to database:', error.message);
+        throw new Error('Failed to save prescription to the database');
+    }
+};

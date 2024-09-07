@@ -6,30 +6,39 @@ import "./Registration.sol";
 contract Prescription {
 
     Registration public reg_contract;
+    uint256 private prescriptionCounter; // Counter for generating incremental prescription IDs
 
     struct PharmacySelect {
         address registeredPharmacy;
         bool isSelected;
     }
 
+    struct PrescriptionDetail {
+        uint256 prescriptionID; // Changed to uint256 for incremental ID
+        address patient;
+        string IPFShash;
+        MedicineCollectionState medicineCollectionState;
+        address physician;
+    }
+
     // Mapping for storing the selected pharmacy for each patient or physician
     mapping(address => PharmacySelect) public PharmaciesSelection;
-    mapping(address => bool) public hasPharmacySelected; 
+    mapping(address => bool) public hasPharmacySelected;
+
+    // Mapping to store prescriptions with unique ID
+    mapping(uint256 => PrescriptionDetail) public prescriptions;
 
     enum MedicineCollectionState { ReadyForCollection, Collected }
-    MedicineCollectionState public medicineCollectionState;
-
-    uint public patientID;
-    string public IPFShash;  
 
     event PharmacySelected(address _pharmacy);
     event PrescriptionCreated(
+        uint256 prescriptionID,
         address physician,
-        uint patientID,
+        address patient,
         string IPFShash
     );
-    event MedicationIsPrepared(address _pharmacy, uint patientID);
-    event MedicationIsCollected(address patient, uint patientID, string IPFShash);
+    event MedicationIsPrepared(uint256 prescriptionID, address _pharmacy, address patient);
+    event MedicationIsCollected(uint256 prescriptionID, address patient, string IPFShash);
 
     modifier onlyPhysician() {
         require(reg_contract.Physician(msg.sender), "Only the Physician is allowed to execute this function");
@@ -48,19 +57,32 @@ contract Prescription {
 
     constructor(address registrationSCAddress) {
         reg_contract = Registration(registrationSCAddress);
+        prescriptionCounter = 0; // Initialize the prescription counter
     }
 
     function prescriptionCreation(
-        uint _patientID,
+        address _patient,
         string memory _IPFShash
-    ) public onlyPhysician {
-        patientID = _patientID;
-        IPFShash = _IPFShash;
+    ) public onlyPhysician returns (uint256) {
+        uint256 prescriptionID = prescriptionCounter++;
+        PrescriptionDetail memory detail = PrescriptionDetail({
+            prescriptionID: prescriptionID,
+            patient: _patient,
+            IPFShash: _IPFShash,
+            medicineCollectionState: MedicineCollectionState.ReadyForCollection,
+            physician: msg.sender
+        });
+
+        prescriptions[prescriptionID] = detail;
+
         emit PrescriptionCreated(
+            prescriptionID,
             msg.sender,
-            patientID,
-            IPFShash
+            _patient,
+            _IPFShash
         );
+
+        return prescriptionID;
     }
 
     function selectPharmacy(address _pharmacyAddress) public {
@@ -72,25 +94,33 @@ contract Prescription {
         emit PharmacySelected(_pharmacyAddress);
     }
 
-    function accessPrescription() public view onlyRegisteredPharmacies returns (uint, string memory) {
+    function accessPrescription(uint256 _prescriptionID) public view onlyRegisteredPharmacies returns (address, string memory) {
         PharmacySelect memory selectedPharmacy = PharmaciesSelection[msg.sender];
         require(selectedPharmacy.isSelected, "This pharmacy does not have access to the prescription");
 
-        return (patientID, IPFShash);
+        PrescriptionDetail memory detail = prescriptions[_prescriptionID];
+        require(detail.patient != address(0), "Prescription does not exist");
+
+        return (detail.patient, detail.IPFShash);
     }
 
-    function medicationPreparation(uint _patientID) public onlyRegisteredPharmacies {
+    function medicationPreparation(uint256 _prescriptionID) public onlyRegisteredPharmacies {
+        PrescriptionDetail storage detail = prescriptions[_prescriptionID];
+        require(detail.patient != address(0), "Prescription does not exist");
         require(PharmaciesSelection[msg.sender].isSelected, "This pharmacy is not selected by the patient or physician");
-        patientID = _patientID;
-        emit MedicationIsPrepared(msg.sender, patientID);
-        medicineCollectionState = MedicineCollectionState.ReadyForCollection;
+        require(detail.medicineCollectionState == MedicineCollectionState.ReadyForCollection, "Medication is not ready for collection");
+
+        emit MedicationIsPrepared(_prescriptionID, msg.sender, detail.patient);
+        detail.medicineCollectionState = MedicineCollectionState.ReadyForCollection;
     }
 
-    function medicationCollection(uint _patientID, string memory _IPFShash) public onlyRegisteredPharmacies {
-        require(medicineCollectionState == MedicineCollectionState.ReadyForCollection, "Can't collect medication since it is not ready");
-        patientID = _patientID;
-        IPFShash = _IPFShash;
-        medicineCollectionState = MedicineCollectionState.Collected;
-        emit MedicationIsCollected(msg.sender, patientID, _IPFShash);
+    function medicationCollection(uint256 _prescriptionID, string memory _IPFShash) public onlyRegisteredPharmacies {
+        PrescriptionDetail storage detail = prescriptions[_prescriptionID];
+        require(detail.patient != address(0), "Prescription does not exist");
+        require(detail.medicineCollectionState == MedicineCollectionState.ReadyForCollection, "Can't collect medication since it is not ready");
+
+        detail.IPFShash = _IPFShash;
+        detail.medicineCollectionState = MedicineCollectionState.Collected;
+        emit MedicationIsCollected(_prescriptionID, detail.patient, _IPFShash);
     }
 }

@@ -9,7 +9,6 @@ const ConfigPage = () => {
         prescriptionContractAddress: '',
         prescriptionContractABI: '',
         ipfsClientURL: '',
-        blockchainServerURL: '' // New field
     });
     const [isEditing, setIsEditing] = useState(false);
     const [error, setError] = useState('');
@@ -53,7 +52,6 @@ const ConfigPage = () => {
                     fetchSetting('prescriptionContractAddress'),
                     fetchSetting('prescriptionContractABI'),
                     fetchSetting('ipfsClientURL'),
-                    fetchSetting('blockchainServerURL') // New field
                 ]);
 
                 setSettings({
@@ -62,7 +60,6 @@ const ConfigPage = () => {
                     prescriptionContractAddress: decryptValue(addressPres),
                     prescriptionContractABI: decryptValue(abiPres),
                     ipfsClientURL: decryptValue(url),
-                    blockchainServerURL: decryptValue(blockchainUrl) // New field
                 });
             } catch (error) {
                 console.error('Error fetching settings:', error);
@@ -93,7 +90,6 @@ const ConfigPage = () => {
             prescriptionContractAddress: encryptValue(settings.prescriptionContractAddress),
             prescriptionContractABI: encryptValue(settings.prescriptionContractABI),
             ipfsClientURL: encryptValue(settings.ipfsClientURL),
-            blockchainServerURL: encryptValue(settings.blockchainServerURL) // New field
         };
 
         try {
@@ -103,7 +99,6 @@ const ConfigPage = () => {
                 axios.put(`${apiBaseURL}settings/prescriptionContractAddress`, { value: encryptedSettings.prescriptionContractAddress }),
                 axios.put(`${apiBaseURL}settings/prescriptionContractABI`, { value: encryptedSettings.prescriptionContractABI }),
                 axios.put(`${apiBaseURL}settings/ipfsClientURL`, { value: encryptedSettings.ipfsClientURL }),
-                axios.put(`${apiBaseURL}settings/blockchainServerURL`, { value: encryptedSettings.blockchainServerURL }) // New field
             ]);
             setIsEditing(false);
             alert('Settings updated successfully');
@@ -119,7 +114,6 @@ const ConfigPage = () => {
             <h4 className="">Settings</h4>
             {error && <div className="alert alert-danger">{error}</div>}
             <form>
-                {/* URL Fields at the Top */}
                 <div className="mb-3 form-floating">
                     <input
                         type="text"
@@ -134,21 +128,6 @@ const ConfigPage = () => {
                     <label htmlFor="ipfsClientURL">IPFS Client URL</label>
                 </div>
 
-                <div className="mb-3 form-floating">
-                    <input
-                        type="text"
-                        className="form-control"
-                        id="blockchainServerURL"
-                        name="blockchainServerURL"
-                        value={settings.blockchainServerURL}
-                        onChange={handleChange}
-                        disabled={!isEditing}
-                        required
-                    />
-                    <label htmlFor="blockchainServerURL">Blockchain Server URL</label>
-                </div>
-
-                {/* Other Fields */}
                 <div className="mb-3 form-floating">
                     <input
                         type="text"
