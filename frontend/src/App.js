@@ -1,17 +1,22 @@
 import './App.css';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import Home from './views/home';
+import About from './views/about';
 import Navbar from './views/navbar';
-import RegulatoryAuthorityRegistration from './views/regulatoryauthorityregistration'; 
-import PhysicianRegistration from './views/physicianregistration'; 
-import PharmacyRegistration from './views/pharmacyregistration'; 
-import PatientRegistration from './views/patientregistration'; 
+import RegulatoryAuthorityRegistration from './views/forms/regulatoryauthorityregistration'; 
+import PhysicianRegistration from './views/forms/physicianregistration'; 
+import PharmacyRegistration from './views/forms/pharmacyregistration'; 
+import PatientRegistration from './views/forms/patientregistration'; 
 import useUserRole from './hooks/useuserrole';
 import RedirectToHome from './views/redirecttohome';
 import QueryPage from './views/querypage';
 import ConfigPage from './components/configpage';
-import PrescriptionForm from './views/prescriptionform';
+import PrescriptionForm from './views/forms/prescriptionform';
 import DownloadFromIPFS from './components/downloadfromipfs';
+import Sample from './views/sample';
+import RegulatoryHome from './views/homes/regulatoryHome';
+import PhysicianHome from './views/homes/physicianHome';
+
+import PharmacySelection from './views/forms/pharmacyselection';
 
 // Component to handle errors
 const ErrorBoundary = ({ error, children }) => {
@@ -37,12 +42,14 @@ function App() {
         <Navbar role={role} />
         <Routes>
           <Route path="/config" element={<ConfigPage />} />
+          <Route path="/sample" element={<Sample />} />
+          <Route path="/pharm" element={<PharmacySelection />} />
           <Route
             path="*"
             element={
               <ErrorBoundary error={error}>
                 <Routes>
-                  <Route path="/" element={<Home />} />
+                  <Route path="/about" element={<About />} />
                   {role === 'Administrator' && (
                     <>
                       <Route path="/register-regulatory-authority" element={<RegulatoryAuthorityRegistration />} />
@@ -52,6 +59,7 @@ function App() {
                   )}
                   {role === 'Regulatory Authority' && (
                     <>
+                      <Route path="/" element={<RegulatoryHome />} />
                       <Route path="/register-physician" element={<PhysicianRegistration />} />
                       <Route path="/register-pharmacy" element={<PharmacyRegistration />} />
                       <Route path="/register-patient" element={<PatientRegistration />} />
@@ -61,6 +69,7 @@ function App() {
                   )}
                   {role === 'Physician' && (
                     <>
+                      <Route path='/' element={<PhysicianHome />} />
                       <Route path='/create-prescription' element={<PrescriptionForm />} />
                     </>
                   )}

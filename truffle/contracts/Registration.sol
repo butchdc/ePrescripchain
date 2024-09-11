@@ -29,7 +29,7 @@ contract Registration {
     }
 
     modifier onlyRegulatoryAuthority() {
-        require(regulatoryAuthority[msg.sender], "Only a registered regulatory authority can run this function"); // Updated variable name
+        require(regulatoryAuthority[msg.sender], "Only a registered regulatory authority can run this function");
         _;
     }
 
@@ -39,11 +39,11 @@ contract Registration {
         emit ContractDeployed(administrator);
     }
 
-    function registerRegulatoryAuthority(address user, string memory _ipfsHash) public onlyAdministrator { // Renamed parameter to 'user'
+    function registerRegulatoryAuthority(address user, string memory _ipfsHash) public onlyAdministrator { 
         require(user != address(0), "Invalid address");
-        require(!regulatoryAuthority[user], "Regulatory authority already registered"); // Updated variable name
+        require(!regulatoryAuthority[user], "Regulatory authority already registered");
         
-        regulatoryAuthority[user] = true; // Updated variable name
+        regulatoryAuthority[user] = true;
         regulatoryAuthorityIPFSHash[user] = _ipfsHash;
         
         emit RegulatoryAuthorityRegistered(msg.sender, user, _ipfsHash);
@@ -59,7 +59,7 @@ contract Registration {
         emit PhysicianRegistered(msg.sender, user, _ipfsHash);
     }
 
-    function PharmacyRegistration(address user, string memory _ipfsHash) public onlyRegulatoryAuthority { // Renamed parameter to 'user'
+    function PharmacyRegistration(address user, string memory _ipfsHash) public onlyRegulatoryAuthority { 
         require(user != address(0), "Invalid address");
         require(!Pharmacy[user], "The pharmacy is already registered");
         
@@ -92,7 +92,7 @@ contract Registration {
         return pharmacyIPFSHash[user];
     }
 
-    function getRegulatoryAuthorityIPFSHash(address user) public view returns (string memory) { // Renamed parameter to 'user'
+    function getRegulatoryAuthorityIPFSHash(address user) public view returns (string memory) {
         return regulatoryAuthorityIPFSHash[user];
     }
 }

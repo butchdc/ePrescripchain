@@ -30,8 +30,8 @@ const Navbar = () => {
                     return;
                 }
                 if(role === 'Physician'){
-                    setLine1(`${attributes.name} (NZMC: ${attributes.nzmcNo})`);
-                    setLine2(attributes.speciality);
+                    setLine1(`${attributes.name}`);
+                    setLine2(`${attributes.speciality}`);
                     return;
                 }
                 if(role === 'Pharmacy'){
@@ -40,8 +40,8 @@ const Navbar = () => {
                     return;
                 }
                 if(role === 'Patient'){
-                    setLine1(`${attributes.name} (NHI: ${attributes.nhiNumber})`);
-                    setLine2(attributes.patientAddress);
+                    setLine1(`${attributes.name}`);
+                    setLine2(`NHI: ${attributes.nhiNumber}`);
                     return;
                 }
 
@@ -57,7 +57,7 @@ const Navbar = () => {
         <nav className="navbar navbar-expand-lg navbar-dark bgcolor1 ps-3 pe-3 m-0">
             <Link className="navbar-brand" to="/">
                 <img src="/images/logo.png" className='pe-2' style={{ height: '40px', width: 'auto' }} />
-                e-Prescription DApp
+                e-PrescripChain
             </Link>
             <button 
                 className="navbar-toggler" 
@@ -89,6 +89,9 @@ const Navbar = () => {
                     {role === 'Regulatory Authority' && (
                         <>
                             <li className="nav-item">
+                                <Link className="nav-link" to="/">Home</Link>
+                            </li>                        
+                            <li className="nav-item">
                                 <Link className="nav-link" to="/register-physician">Register Physician</Link>
                             </li>
                             <li className="nav-item">
@@ -97,25 +100,44 @@ const Navbar = () => {
                             <li className="nav-item">
                                 <Link className="nav-link" to="/register-patient">Register Patient</Link>
                             </li>
-                            <li className="nav-item">
-                                <Link className="nav-link" to="/query-page">Account Query</Link>
+                            <li className="nav-item dropdown">
+                                <Link
+                                    className="nav-link dropdown-toggle"
+                                    to="#"
+                                    role="button"
+                                    id="navbarDropdown"
+                                    data-bs-toggle="dropdown"
+                                    aria-expanded="false"
+                                >
+                                    Queries
+                                </Link>
+                                <div className="dropdown-menu bgcolor2" aria-labelledby="navbarDropdown">
+                                    <Link className="dropdown-item" to="/query-page">Account Query</Link>
+                                    <Link className="dropdown-item" to="/ipfs-query">IPFS Query</Link>
+                                </div>
                             </li>
                             <li className="nav-item">
-                                <Link className="nav-link" to="/ipfs-query">IPFS Query</Link>
+                                <Link className="nav-link" to="/info">About</Link>
                             </li>
+
                         </>
                     )}
                     {role === 'Physician' && (
-                        <li className="nav-item">
-                            <Link className="nav-link" to="/create-prescription">Create Prescription</Link>
-                        </li>
+                        <>
+                            <li className="nav-item">
+                                <Link className="nav-link" to="/">Home</Link>
+                            </li>
+                            <li className="nav-item">
+                                <Link className="nav-link" to="/create-prescription">Create Prescription</Link>
+                            </li>
+                        </>
                     )}
                 </ul>
                 {role != 'Account is not Registered!' ? 
                 <div className="text-light">
                     <div className='m-0 p-0'>{line1} </div>                  
                     <div className='smallfont txcolor1 m-0 p-0'>{line2}</div> 
-                    <div className='smallfont'>Current Role: {role}</div>
+                    <div className='smallfont'>Role: {role}</div>
                     {/* <div style={{fontSize:6}}>{userAddress}</div> */}
                 </div>
                 : <div className="text-light smallfont">{role}</div>

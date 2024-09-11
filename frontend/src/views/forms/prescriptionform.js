@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { initWeb3, initContracts } from '../utils/web3utils';
-import { getUserRoleAndAttributes } from '../utils/userqueryutils';
-import { uploadToIPFS, savePrescriptionToDB } from '../utils/apiutils';
+import { initWeb3, initContracts } from '../../utils/web3utils';
+import { getUserRoleAndAttributes } from '../../utils/userqueryutils';
+import { uploadToIPFS, savePrescriptionToDB } from '../../utils/apiutils';
 
 const PrescriptionForm = () => {
     const [physicianAddress, setPhysicianAddress] = useState('');
@@ -56,15 +56,19 @@ const PrescriptionForm = () => {
                 setPatientAttributes({ name, patientAddress, gender, dateOfBirth, nhiNumber }); 
             } else {
                 setIsPatientRegistered(false);
-                setPatientAttributes({}); 
+                setPatientAttributes({});
+                setError(null);
             }
         } catch (err) {
-            console.error("Error verifying patient address:", err);
-            setError("Error verifying patient address");
+            //console.error("Error verifying patient address:", err);
+            // setError("Error verifying patient address");
+            setIsPatientRegistered(false);
+            setPatientAttributes({});
         }
     };
 
     const prepareDataForIPFS = () => {
+        const currentDate = new Date().toLocaleString();
         return {
             physicianAddress,
             patientAddress,
@@ -74,7 +78,8 @@ const PrescriptionForm = () => {
                 mitte: drug.mitte,
                 mitteUnit: drug.mitteUnit,
                 repeat: drug.repeat
-            }))
+            })),
+            date: currentDate
         };
     };
 
@@ -96,7 +101,6 @@ const PrescriptionForm = () => {
 
             // Prepare the data to be uploaded to IPFS
             const dataToUpload = prepareDataForIPFS();
-            console.log(dataToUpload);
             const ipfsHash = await uploadToIPFS(dataToUpload);
 
             // Initialize Web3 and contract instances
@@ -123,6 +127,7 @@ const PrescriptionForm = () => {
             // Reset form state after successful submission
             setPatientAddress('');
             setDrugs([{ name: '', sig: '', mitte: '', mitteUnit: 'tablets', repeat: '' }]);
+            setIsPatientRegistered(null);
             setSuccess('Prescription submitted successfully!');
             setError(null);
         } catch (err) {

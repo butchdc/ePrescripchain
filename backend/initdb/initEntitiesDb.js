@@ -26,6 +26,8 @@ db.serialize(() => {
     CREATE TABLE IF NOT EXISTS pharmacies (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       address TEXT UNIQUE NOT NULL,
+      pharmacyName TEXT NOT NULL,
+      pharmacyAddress TEXT NOT NULL,
       ipfsHash TEXT NOT NULL,
       createdBy TEXT NOT NULL,
       date INTEGER NOT NULL

@@ -12,9 +12,6 @@ require('./initdb/initSettingsDb');
 require('./initdb/initEntitiesDb');
 require('./initdb/initPrescriptionsDB');
 
-// Start the event listener
-//require('./listeners/eventListener');
-
 app.use(express.json());
 app.use(cors());
 

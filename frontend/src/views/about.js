@@ -1,10 +1,10 @@
-const Home = () => {
+const About = () => {
     return (
         <div>
             <div className="container-fluid p-0 bgcolor2">
                 <div className="">
                     <div className="p-3 pb-0">
-                        <h1>Welcome to the Blockchain e-Prescription System</h1>
+                        <h1>Welcome to the e-PrescripChain System</h1>
                         <p>Welcome to the innovative Blockchain e-Prescription System, where cutting-edge technology meets healthcare. Our platform uses blockchain to transform the way prescriptions are managed, ensuring greater security, transparency, and efficiency for both healthcare providers and patients.</p>              
                         </div>
                     <div className="bgcolor3 p-3">
@@ -30,4 +30,4 @@ const Home = () => {
     );
 }
  
-export default Home;
+export default About;

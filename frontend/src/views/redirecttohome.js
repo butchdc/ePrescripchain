@@ -5,7 +5,7 @@ const RedirectToHome = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    navigate('/'); 
+    navigate('/about'); 
   }, [navigate]);
 
   return null; 

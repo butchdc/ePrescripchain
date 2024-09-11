@@ -1,21 +1,20 @@
-import React, { useState } from 'react';
-import { uploadToIPFS, saveEntityToDB } from '../utils/apiutils'; 
-import { initWeb3, initContracts } from '../utils/web3utils'; 
-import { getUserRoleAndAttributes } from '../utils/userqueryutils'; 
+import { useState } from 'react';
+import { uploadToIPFS, saveEntityToDB } from '../../utils/apiutils'; 
+import { getUserRoleAndAttributes } from '../../utils/userqueryutils'; 
+import { initWeb3, initContracts } from '../../utils/web3utils'; 
 
-const PhysicianRegistration = () => {
+const RegulatoryAuthorityRegistration = () => {
     const [formState, setFormState] = useState({
         address: '',
         name: '',
-        speciality: '',
         contactNumber: '',
-        nzmcNo: '',
+        contactEmail: '',
+        organization: '',
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
 
-    // Generic change handler for form fields
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormState((prevState) => ({
@@ -31,9 +30,9 @@ const PhysicianRegistration = () => {
         setSuccess(null);
 
         try {
-            const { address, name, speciality, contactNumber, nzmcNo } = formState;
+            const { address, name, contactNumber, contactEmail, organization } = formState;
 
-            if (!address || !name || !speciality || !contactNumber || !nzmcNo) {
+            if (!address || !name || !contactNumber || !contactEmail || !organization) {
                 throw new Error('All fields are required');
             }
 
@@ -42,9 +41,8 @@ const PhysicianRegistration = () => {
             if (searchRole !== 'Account is not Registered!') {
                 throw new Error(`This address is already registered as ${searchRole}.`);
             }
-
-            const role = 'Physician';
-            const data = { address, role, name, speciality, contactNumber, nzmcNo };
+            const role = 'Regulatory Authority';
+            const data = { address, role, name, contactNumber, contactEmail, organization };
             const ipfsHash = await uploadToIPFS(data);
 
             const web3 = await initWeb3();
@@ -53,25 +51,23 @@ const PhysicianRegistration = () => {
             const accounts = await web3.eth.getAccounts();
             const userAddress = accounts[0];
 
-            await registrationContract.methods.PhysicianRegistration(address, ipfsHash).send({ from: userAddress });
+            await registrationContract.methods.registerRegulatoryAuthority(address, ipfsHash).send({ from: userAddress });
 
-            await saveEntityToDB('physicians',{
+            await saveEntityToDB('regulatory_authorities',{
                 address,
                 ipfsHash,
                 createdBy: userAddress,
                 date: Date.now(),
             });
 
-            setSuccess('Physician registered successfully!');
-
+            setSuccess('Regulatory authority registered successfully!');
             setFormState({
                 address: '',
                 name: '',
-                speciality: '',
                 contactNumber: '',
-                nzmcNo: '',
+                contactEmail: '',
+                organization: '',
             });
-
             setError(null);
         } catch (err) {
             setError(err.message);
@@ -80,9 +76,35 @@ const PhysicianRegistration = () => {
         }
     };
 
+    const handlePaste = async (e) => {
+        e.preventDefault(); 
+        try {
+            const clipboardData = e.clipboardData || window.clipboardData;
+            const text = clipboardData.getData('Text');
+            const rows = text.split('\n').map(row => row.split(';'));
+
+            if (rows.length > 0) {
+                const [address, name, contactNumber, contactEmail, organization] = rows[0];
+                setFormState({
+                    address: address || '',
+                    name: name || '',
+                    contactNumber: contactNumber || '',
+                    contactEmail: contactEmail || '',
+                    organization: organization || '',
+                });
+            }
+        } catch (err) {
+            setError('Failed to paste data from clipboard.');
+            console.error('Error pasting text: ', err);
+        }
+    };
+
     return (
-        <div className="container p-3 bgcolor2">
-            <h4>Physician Registration</h4>
+        <div 
+            className="container p-3 bgcolor2"
+            onPaste={handlePaste} 
+        >
+            <h4>Regulatory Authority Registration</h4>
             <form onSubmit={handleSubmit} className="mt-3">
                 <div className="form-floating mb-3">
                     <input
@@ -113,19 +135,6 @@ const PhysicianRegistration = () => {
                 <div className="form-floating mb-3">
                     <input
                         type="text"
-                        id="speciality"
-                        name="speciality"
-                        className="form-control"
-                        value={formState.speciality}
-                        onChange={handleChange}
-                        placeholder="Speciality"
-                        autoComplete='off'
-                    />
-                    <label htmlFor="speciality">Speciality</label>
-                </div>
-                <div className="form-floating mb-3">
-                    <input
-                        type="text"
                         id="contactNumber"
                         name="contactNumber"
                         className="form-control"
@@ -138,18 +147,31 @@ const PhysicianRegistration = () => {
                 </div>
                 <div className="form-floating mb-3">
                     <input
-                        type="text"
-                        id="nzmcNo"
-                        name="nzmcNo"
+                        type="email"
+                        id="contactEmail"
+                        name="contactEmail"
                         className="form-control"
-                        value={formState.nzmcNo}
+                        value={formState.contactEmail}
                         onChange={handleChange}
-                        placeholder="NZMC No"
+                        placeholder="Contact Email"
                         autoComplete='off'
                     />
-                    <label htmlFor="nzmcNo">NZMC No</label>
+                    <label htmlFor="contactEmail">Contact Email</label>
                 </div>
-                <button className="btn btn-sm btn-primary" type="submit" disabled={loading}>
+                <div className="form-floating mb-3">
+                    <input
+                        type="text"
+                        id="organization"
+                        name="organization"
+                        className="form-control"
+                        value={formState.organization}
+                        onChange={handleChange}
+                        placeholder="Organization"
+                        autoComplete='off'
+                    />
+                    <label htmlFor="organization">Organization</label>
+                </div>
+                <button className="btn btn-primary" type="submit" disabled={loading}>
                     {loading ? 'Registering...' : 'Register'}
                 </button>
             </form>
@@ -159,4 +181,4 @@ const PhysicianRegistration = () => {
     );
 };
 
-export default PhysicianRegistration;
+export default RegulatoryAuthorityRegistration;

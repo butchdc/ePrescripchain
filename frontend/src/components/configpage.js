@@ -9,6 +9,7 @@ const ConfigPage = () => {
         prescriptionContractAddress: '',
         prescriptionContractABI: '',
         ipfsClientURL: '',
+        accounts: '', 
     });
     const [isEditing, setIsEditing] = useState(false);
     const [error, setError] = useState('');
@@ -46,12 +47,13 @@ const ConfigPage = () => {
             if (!apiBaseURL) return;
 
             try {
-                const [addressReg, abiReg, addressPres, abiPres, url, blockchainUrl] = await Promise.all([
+                const [addressReg, abiReg, addressPres, abiPres, url, accounts] = await Promise.all([
                     fetchSetting('registrationContractAddress'),
                     fetchSetting('registrationContractABI'),
                     fetchSetting('prescriptionContractAddress'),
                     fetchSetting('prescriptionContractABI'),
                     fetchSetting('ipfsClientURL'),
+                    fetchSetting('accounts') // Fetch the accounts setting
                 ]);
 
                 setSettings({
@@ -60,6 +62,7 @@ const ConfigPage = () => {
                     prescriptionContractAddress: decryptValue(addressPres),
                     prescriptionContractABI: decryptValue(abiPres),
                     ipfsClientURL: decryptValue(url),
+                    accounts: decryptValue(accounts) // Decrypt and set the accounts setting
                 });
             } catch (error) {
                 console.error('Error fetching settings:', error);
@@ -90,6 +93,7 @@ const ConfigPage = () => {
             prescriptionContractAddress: encryptValue(settings.prescriptionContractAddress),
             prescriptionContractABI: encryptValue(settings.prescriptionContractABI),
             ipfsClientURL: encryptValue(settings.ipfsClientURL),
+            accounts: encryptValue(settings.accounts) // Encrypt accounts setting
         };
 
         try {
@@ -99,6 +103,7 @@ const ConfigPage = () => {
                 axios.put(`${apiBaseURL}settings/prescriptionContractAddress`, { value: encryptedSettings.prescriptionContractAddress }),
                 axios.put(`${apiBaseURL}settings/prescriptionContractABI`, { value: encryptedSettings.prescriptionContractABI }),
                 axios.put(`${apiBaseURL}settings/ipfsClientURL`, { value: encryptedSettings.ipfsClientURL }),
+                axios.put(`${apiBaseURL}settings/accounts`, { value: encryptedSettings.accounts }) // Save accounts setting
             ]);
             setIsEditing(false);
             alert('Settings updated successfully');
@@ -178,6 +183,21 @@ const ConfigPage = () => {
                         name="prescriptionContractABI"
                         rows="5"
                         value={settings.prescriptionContractABI}
+                        onChange={handleChange}
+                        disabled={!isEditing}
+                        required
+                    />
+                </div>
+
+                {/* Added new textarea for Accounts */}
+                <div className="mb-3">
+                    <label htmlFor="accounts" className="form-label">Accounts</label>
+                    <textarea
+                        className="form-control"
+                        id="accounts"
+                        name="accounts"
+                        rows="4"
+                        value={settings.accounts}
                         onChange={handleChange}
                         disabled={!isEditing}
                         required

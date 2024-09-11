@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { uploadToIPFS, saveEntityToDB } from '../utils/apiutils'; 
-import { initWeb3, initContracts } from '../utils/web3utils'; 
-import { getUserRoleAndAttributes } from '../utils/userqueryutils'; 
+import { uploadToIPFS, saveEntityToDB } from '../../utils/apiutils'; 
+import { initWeb3, initContracts } from '../../utils/web3utils'; 
+import { getUserRoleAndAttributes } from '../../utils/userqueryutils'; 
 
 const PatientRegistration = () => {
     const [formState, setFormState] = useState({
@@ -16,7 +16,6 @@ const PatientRegistration = () => {
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
 
-    // Generic change handler for form fields
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormState((prevState) => ({
@@ -80,8 +79,35 @@ const PatientRegistration = () => {
         }
     };
 
+    const handlePaste = async (e) => {
+        e.preventDefault(); // Prevent the default paste behavior
+        try {
+            const clipboardData = e.clipboardData || window.clipboardData;
+            const text = clipboardData.getData('Text');
+            const rows = text.split('\n').map(row => row.split(';'));
+
+            if (rows.length > 0) {
+                const [address, name, patientAddress, gender, dateOfBirth, nhiNumber] = rows[0];
+                setFormState({
+                    address: address || '',
+                    name: name || '',
+                    patientAddress: patientAddress || '',
+                    gender: gender || '',
+                    dateOfBirth: dateOfBirth || '',
+                    nhiNumber: nhiNumber || '',
+                });
+            }
+        } catch (err) {
+            setError('Failed to paste data from clipboard.');
+            console.error('Error pasting text: ', err);
+        }
+    };
+
     return (
-        <div className="container p-3 bgcolor2">
+        <div 
+            className="container p-3 bgcolor2"
+            onPaste={handlePaste}
+        >
             <h4>Patient Registration</h4>
             <form onSubmit={handleSubmit} className="mt-3">
                 <div className="form-floating mb-3">

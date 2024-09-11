@@ -1,5 +1,5 @@
 const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database('./db/entities.db');
+const db = new sqlite3.Database('./db/prescriptions.db');
 
 db.serialize(() => {
   // Create the prescriptions table if it does not already exist
