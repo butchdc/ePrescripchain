@@ -52,13 +52,14 @@ function fetchPrescriptions(conditions, sort, res) {
 
 // Route to get all prescriptions or filter by conditions with optional sorting
 router.get('/', (req, res) => {
-  const { createdBy, address, prescriptionID, sortColumn, sortOrder } = req.query;
+  const { createdBy, address, prescriptionID, assignedTo, sortColumn, sortOrder } = req.query;
   const conditions = {};
   const sort = {};
 
   if (createdBy) conditions.createdBy = createdBy;
   if (address) conditions.address = address;
   if (prescriptionID) conditions.prescriptionID = prescriptionID;
+  if (assignedTo) conditions.assignedTo = assignedTo;
 
   if (sortColumn && sortOrder) {
     sort.column = sortColumn;
@@ -71,7 +72,7 @@ router.get('/', (req, res) => {
 
 // Route to create or update a prescription
 router.post('/', (req, res) => {
-  const { address, ipfsHash, createdBy, date, prescriptionID } = req.body;
+  const { address, ipfsHash, createdBy, date, prescriptionID, assignedTo } = req.body;
 
   console.log(`[${getCurrentTimestamp()}] POST request received with body:`, req.body);
 
@@ -81,16 +82,17 @@ router.post('/', (req, res) => {
   }
 
   const query = `
-    INSERT INTO prescriptions (address, ipfsHash, createdBy, date, prescriptionID)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO prescriptions (address, ipfsHash, createdBy, date, prescriptionID, assignedTo)
+    VALUES (?, ?, ?, ?, ?, ?)
     ON CONFLICT(prescriptionID) DO UPDATE SET
       address=excluded.address,
       ipfsHash=excluded.ipfsHash,
       createdBy=excluded.createdBy,
-      date=excluded.date
+      date=excluded.date,
+      assignedTo=excluded.assignedTo
   `;
 
-  db.run(query, [address, ipfsHash, createdBy, date, prescriptionID], function (err) {
+  db.run(query, [address, ipfsHash, createdBy, date, prescriptionID, assignedTo || null], function (err) {
     if (err) {
       console.error(`[${getCurrentTimestamp()}] Error inserting/updating prescription:`, err.message);
       res.status(500).json({ error: 'An error occurred while processing the request.' });

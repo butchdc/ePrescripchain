@@ -130,6 +130,16 @@ const Navbar = () => {
                             <li className="nav-item">
                                 <Link className="nav-link" to="/create-prescription">Create Prescription</Link>
                             </li>
+                            <li className="nav-item">
+                                <Link className="nav-link" to="/access-prescription">Access Prescription</Link>
+                            </li>
+                        </>
+                    )}
+                    {role === 'Pharmacy' && (
+                        <>
+                            <li className="nav-item">
+                                <Link className="nav-link" to="/access-prescription">Access Prescription</Link>
+                            </li>
                         </>
                     )}
                 </ul>

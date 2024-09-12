@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import useUserRole from '../hooks/useuserrole';
 import { getUserRoleAndAttributes } from '../utils/userqueryutils';
 

@@ -7,14 +7,9 @@ contract Prescription {
 
     // State Variables
     Registration public reg_contract;
-    uint256 private prescriptionCounter; 
+    uint256 private prescriptionCounter;
 
     // Structs
-    struct PharmacySelect {
-        address registeredPharmacy;
-        bool isSelected;
-    }
-
     struct PrescriptionDetail {
         uint256 prescriptionID;
         address patient;
@@ -24,13 +19,12 @@ contract Prescription {
     }
 
     // Mappings
-    mapping(address => PharmacySelect) public PharmaciesSelection;
-    mapping(uint256 => mapping(address => bool)) public hasPharmacySelected; // Mapping prescription ID to address to boolean
+    mapping(uint256 => mapping(address => bool)) public hasPharmacySelected; 
     mapping(uint256 => PrescriptionDetail) public prescriptions;
     mapping(uint256 => address) public prescriptionToPharmacy;
 
     // Enums
-    enum PrescriptionStatus { Created, PharmacyAssigned, ReadyForCollection, Collected, Cancelled }
+    enum PrescriptionStatus { AwaitingPharmacyAssignment, AwaitingForConfirmation, Preparing, ReadyForCollection, Collected, Cancelled }
 
     // Events
     event PharmacySelected(address indexed _pharmacy);
@@ -40,6 +34,8 @@ contract Prescription {
         address indexed patient,
         string IPFShash
     );
+    event PrescriptionAccepted(uint256 indexed prescriptionID, address _pharmacy);
+    event PrescriptionRejected(uint256 indexed prescriptionID, address _pharmacy);
     event MedicationIsPrepared(uint256 indexed prescriptionID, address _pharmacy, address patient);
     event MedicationIsCollected(uint256 indexed prescriptionID, address patient);
     event PrescriptionCancelled(uint256 indexed prescriptionID, address patient);
@@ -63,12 +59,20 @@ contract Prescription {
 
     modifier onlyAuthorized(uint256 _prescriptionID) {
         PrescriptionDetail memory detail = prescriptions[_prescriptionID];
+        bool isPharmacy = hasPharmacySelected[_prescriptionID][msg.sender];
+        
         require(
             msg.sender == detail.physician || 
             msg.sender == detail.patient || 
-            PharmaciesSelection[msg.sender].isSelected,
+            isPharmacy,
             "Unauthorized access"
         );
+        _;
+    }
+
+    modifier onlyCreator(uint256 _prescriptionID) {
+        PrescriptionDetail memory detail = prescriptions[_prescriptionID];
+        require(msg.sender == detail.physician, "Only the physician who created this prescription can access it");
         _;
     }
 
@@ -88,7 +92,7 @@ contract Prescription {
             prescriptionID: prescriptionID,
             patient: _patient,
             IPFShash: _IPFShash,
-            status: PrescriptionStatus.Created,
+            status: PrescriptionStatus.AwaitingPharmacyAssignment,
             physician: msg.sender
         });
 
@@ -104,29 +108,6 @@ contract Prescription {
         return prescriptionID;
     }
 
-    function selectPharmacy(uint256 _prescriptionID, address _pharmacyAddress) public {
-        require(reg_contract.Pharmacy(_pharmacyAddress), "Only registered pharmacies can be selected");
-
-        PrescriptionDetail storage detail = prescriptions[_prescriptionID];
-        require(detail.patient != address(0), "Prescription does not exist");
-        require(detail.status == PrescriptionStatus.Created, "Prescription is not in a state that allows pharmacy selection");
-
-        // Ensure only the patient or the physician who created the prescription can select a pharmacy
-        require(msg.sender == detail.patient || msg.sender == detail.physician, "Only the patient or the prescribing physician can select a pharmacy");
-
-        // Check if the user has already selected a pharmacy for this specific prescription
-        require(!hasPharmacySelected[_prescriptionID][msg.sender], "You have already selected a pharmacy for this prescription");
-
-        PharmaciesSelection[msg.sender] = PharmacySelect(_pharmacyAddress, true);
-        hasPharmacySelected[_prescriptionID][msg.sender] = true;  
-
-        detail.status = PrescriptionStatus.PharmacyAssigned;
-        prescriptionToPharmacy[_prescriptionID] = _pharmacyAddress;  
-
-        emit PharmacySelected(_pharmacyAddress);
-        emit PrescriptionStatusUpdated(_prescriptionID, detail.status);
-    }
-
     function accessPrescription(uint256 _prescriptionID) public view onlyAuthorized(_prescriptionID) returns (address, string memory, PrescriptionStatus) {
         PrescriptionDetail memory detail = prescriptions[_prescriptionID];
         require(detail.patient != address(0), "Prescription does not exist");
@@ -134,34 +115,85 @@ contract Prescription {
         return (detail.patient, detail.IPFShash, detail.status);
     }
 
+    function selectPharmacy(uint256 _prescriptionID, address _pharmacyAddress) public {
+        require(reg_contract.Pharmacy(_pharmacyAddress), "Only registered pharmacies can be selected");
+
+        PrescriptionDetail storage detail = prescriptions[_prescriptionID];
+        require(detail.patient != address(0), "Prescription does not exist");
+        require(detail.status == PrescriptionStatus.AwaitingPharmacyAssignment, "Prescription is not in a state that allows pharmacy selection");
+
+        require(msg.sender == detail.patient || msg.sender == detail.physician, "Only the patient or the prescribing physician can select a pharmacy");
+
+        require(!hasPharmacySelected[_prescriptionID][_pharmacyAddress], "This pharmacy has already been selected for this prescription");
+
+        hasPharmacySelected[_prescriptionID][_pharmacyAddress] = true;
+        prescriptionToPharmacy[_prescriptionID] = _pharmacyAddress;
+
+        detail.status = PrescriptionStatus.AwaitingForConfirmation;
+
+        emit PharmacySelected(_pharmacyAddress);
+        emit PrescriptionStatusUpdated(_prescriptionID, detail.status);
+    }
+
+    function acceptPrescription(uint256 _prescriptionID) public onlyRegisteredPharmacies {
+        PrescriptionDetail storage detail = prescriptions[_prescriptionID];
+        require(detail.patient != address(0), "Prescription does not exist");
+        require(detail.status == PrescriptionStatus.AwaitingForConfirmation, "Prescription is not in AwaitingForConfirmation status");
+        require(msg.sender == prescriptionToPharmacy[_prescriptionID], "Only the assigned pharmacy can accept this prescription");
+
+        detail.status = PrescriptionStatus.Preparing;
+
+        emit PrescriptionAccepted(_prescriptionID, msg.sender);
+        emit PrescriptionStatusUpdated(_prescriptionID, detail.status);
+    }
+
+    function rejectPrescription(uint256 _prescriptionID) public onlyRegisteredPharmacies {
+        PrescriptionDetail storage detail = prescriptions[_prescriptionID];
+        require(detail.patient != address(0), "Prescription does not exist");
+        require(detail.status == PrescriptionStatus.AwaitingForConfirmation, "Prescription is not in AwaitingForConfirmation status");
+        require(msg.sender == prescriptionToPharmacy[_prescriptionID], "Only the assigned pharmacy can reject this prescription");
+
+        detail.status = PrescriptionStatus.AwaitingPharmacyAssignment;
+        delete prescriptionToPharmacy[_prescriptionID];
+        hasPharmacySelected[_prescriptionID][msg.sender] = false;
+
+        emit PrescriptionRejected(_prescriptionID, msg.sender);
+        emit PrescriptionStatusUpdated(_prescriptionID, detail.status);
+    }
+
     function medicationPreparation(uint256 _prescriptionID) public onlyRegisteredPharmacies {
         PrescriptionDetail storage detail = prescriptions[_prescriptionID];
         require(detail.patient != address(0), "Prescription does not exist");
-        require(detail.status != PrescriptionStatus.Cancelled, "Prescription is cancelled");
-        require(PharmaciesSelection[msg.sender].isSelected, "This pharmacy is not selected by the patient or physician");
-        require(detail.status == PrescriptionStatus.PharmacyAssigned, "Medication is not ready for collection");
+        require(detail.status == PrescriptionStatus.Preparing, "Prescription is not in Preparing status");
+        require(msg.sender == prescriptionToPharmacy[_prescriptionID], "Only the assigned pharmacy can prepare medication");
+
+        detail.status = PrescriptionStatus.ReadyForCollection;
 
         emit MedicationIsPrepared(_prescriptionID, msg.sender, detail.patient);
-        detail.status = PrescriptionStatus.ReadyForCollection;
+        emit PrescriptionStatusUpdated(_prescriptionID, detail.status);
     }
 
     function medicationCollection(uint256 _prescriptionID) public onlyRegisteredPharmacies {
         PrescriptionDetail storage detail = prescriptions[_prescriptionID];
         require(detail.patient != address(0), "Prescription does not exist");
-        require(detail.status != PrescriptionStatus.Cancelled, "Prescription is cancelled");
-        require(detail.status == PrescriptionStatus.ReadyForCollection, "Can't collect medication since it is not ready");
+        require(detail.status == PrescriptionStatus.ReadyForCollection, "Medication is not ready for collection");
+        require(msg.sender == prescriptionToPharmacy[_prescriptionID], "This pharmacy is not the selected pharmacy for this prescription");
 
         detail.status = PrescriptionStatus.Collected;
-        emit MedicationIsCollected(_prescriptionID, detail.patient);
+
+        emit MedicationIsCollected(_prescriptionID, msg.sender);
+        emit PrescriptionStatusUpdated(_prescriptionID, detail.status);
     }
 
-    function cancelPrescription(uint256 _prescriptionID) public onlyPhysician {
+
+    function cancelPrescription(uint256 _prescriptionID) public onlyCreator(_prescriptionID) {
         PrescriptionDetail storage detail = prescriptions[_prescriptionID];
         require(detail.patient != address(0), "Prescription does not exist");
-        require(detail.status == PrescriptionStatus.Created || detail.status == PrescriptionStatus.PharmacyAssigned, "Prescription cannot be cancelled");
+        require(detail.status == PrescriptionStatus.AwaitingPharmacyAssignment || detail.status == PrescriptionStatus.AwaitingForConfirmation, "Prescription cannot be cancelled");
 
         detail.status = PrescriptionStatus.Cancelled;
         emit PrescriptionCancelled(_prescriptionID, detail.patient);
+        emit PrescriptionStatusUpdated(_prescriptionID, detail.status);
     }
 
     function getAssignedPharmacy(uint256 _prescriptionID) public view onlyAuthorized(_prescriptionID) returns (address) {

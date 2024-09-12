@@ -5,11 +5,12 @@ db.serialize(() => {
   // Create the prescriptions table if it does not already exist
   db.run(`
     CREATE TABLE IF NOT EXISTS prescriptions (
-        prescriptionID INTEGER PRIMARY KEY,
+        prescriptionID TEXT PRIMARY KEY,
         address TEXT NOT NULL,
         ipfsHash TEXT NOT NULL,
         createdBy TEXT NOT NULL,
-        date INTEGER NOT NULL
+        date INTEGER NOT NULL,
+        assignedTo TEXT
     )
   `);
 });

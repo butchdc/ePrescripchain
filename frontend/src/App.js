@@ -15,8 +15,7 @@ import DownloadFromIPFS from './components/downloadfromipfs';
 import Sample from './views/sample';
 import RegulatoryHome from './views/homes/regulatoryHome';
 import PhysicianHome from './views/homes/physicianHome';
-
-import PharmacySelection from './views/forms/pharmacyselection';
+import AccessPrescription from './views/forms/accessprescription';
 
 // Component to handle errors
 const ErrorBoundary = ({ error, children }) => {
@@ -43,7 +42,6 @@ function App() {
         <Routes>
           <Route path="/config" element={<ConfigPage />} />
           <Route path="/sample" element={<Sample />} />
-          <Route path="/pharm" element={<PharmacySelection />} />
           <Route
             path="*"
             element={
@@ -71,6 +69,12 @@ function App() {
                     <>
                       <Route path='/' element={<PhysicianHome />} />
                       <Route path='/create-prescription' element={<PrescriptionForm />} />
+                      <Route path='/access-prescription/' element={<AccessPrescription />} />
+                    </>
+                  )}
+                  {role === 'Pharmacy' && (
+                    <>
+                      <Route path='/access-prescription/' element={<AccessPrescription />} />
                     </>
                   )}
                   <Route path="*" element={<RedirectToHome />} />

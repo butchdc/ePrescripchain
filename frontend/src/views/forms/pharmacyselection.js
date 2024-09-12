@@ -102,14 +102,31 @@ function PharmacySelection({ prescriptionID, onAssignmentSuccess }) {
     
         setLoading(true);
         try {
-
+            // Assign the pharmacy using the smart contract
             await contracts.prescriptionContract.methods
                 .selectPharmacy(prescriptionID, selectedPharmacy.address)
                 .send({ from: currentUser });
     
+            // Fetch the current prescription details to update the assignedTo field
+            const response = await axios.get(`${apiBaseURL}prescriptions/`, {
+                params: { prescriptionID: prescriptionID }
+            });
+            const { prescriptionID: prevPrescriptionID, address: prevAddress, ipfsHash: prevIpfsHash, createdBy: prevCreatedBy, date: prevDate } = response.data[0];
+
+            // Update the assignedTo field in the backend database
+            await axios.post(`${apiBaseURL}prescriptions/`, {
+                prescriptionID: prevPrescriptionID,
+                address: prevAddress,
+                ipfsHash: prevIpfsHash,
+                createdBy: prevCreatedBy,
+                date: prevDate,
+                assignedTo: selectedPharmacy.address 
+            });
+        
             setIsLocked(true);
             onAssignmentSuccess();
             setSuccessMessage('Pharmacy assigned successfully!');
+            
         } catch (err) {
             console.error('Error assigning pharmacy:', err);
             setError('Error assigning pharmacy');
@@ -117,6 +134,7 @@ function PharmacySelection({ prescriptionID, onAssignmentSuccess }) {
             setLoading(false);
         }
     };
+    
     
 
     return (

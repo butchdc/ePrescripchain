@@ -58,6 +58,17 @@ function buildSelectQuery(tableName, conditions) {
   return query;
 }
 
+// Helper function to build UPSERT query
+function buildUpsertQuery(entity, fields) {
+  const setFields = fields.slice(1).map(field => `${field}=excluded.${field}`).join(', ');
+  return `
+    INSERT INTO ${entity} (${fields.join(', ')})
+    VALUES (${fields.map(() => '?').join(', ')})
+    ON CONFLICT(${fields[0]}) DO UPDATE SET
+      ${setFields}
+  `;
+}
+
 // Route to get entities with optional query parameters
 router.get('/:entity', (req, res) => {
   const { entity } = req.params;
@@ -111,17 +122,6 @@ router.post('/:entity', (req, res) => {
   });
 });
 
-// Helper function to build UPSERT query
-function buildUpsertQuery(entity, fields) {
-  const setFields = fields.slice(1).map(field => `${field}=excluded.${field}`).join(', ');
-  return `
-    INSERT INTO ${entity} (${fields.join(', ')})
-    VALUES (${fields.map(() => '?').join(', ')})
-    ON CONFLICT(${fields[0]}) DO UPDATE SET
-      ${setFields}
-  `;
-}
-
 // Route to delete an entity by address
 router.delete('/:entity/:address', (req, res) => {
   const { entity, address } = req.params;
@@ -162,5 +162,23 @@ router.get('/count/:entity', (req, res) => {
   }
   countEntities(entity, res);
 });
+
+// Helper function to count entities
+function countEntities(entity, res) {
+  const query = `SELECT COUNT(*) AS count FROM ${entity}`;
+  
+  console.log(`[${getCurrentTimestamp()}] Executing COUNT query for entity:`, entity);
+  console.log(`[${getCurrentTimestamp()}] Query:`, query);
+
+  db.get(query, (err, row) => {
+    if (err) {
+      console.error(`[${getCurrentTimestamp()}] Error counting ${entity}:`, err.message);
+      res.status(500).json({ error: 'An error occurred while counting the entities.' });
+      return;
+    }
+    console.log(`[${getCurrentTimestamp()}] Count of ${entity}:`, row.count);
+    res.json({ count: row.count });
+  });
+}
 
 module.exports = router;

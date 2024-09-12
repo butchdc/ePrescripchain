@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import jsPDF from 'jspdf';
 import { initWeb3, initContracts } from '../utils/web3utils'; 
 import { downloadFromIPFS } from '../utils/apiutils'; 
@@ -93,7 +93,7 @@ const PreviewPrescription = ({ prescriptionID, onBack }) => {
             const logoHeight = 15;
 
             // Original position for the logo and title
-            const logoX = 10;
+            const logoX = 18;
             const logoY = 20;
 
             // Add the logo to the PDF
@@ -152,9 +152,24 @@ const PreviewPrescription = ({ prescriptionID, onBack }) => {
             const xOffset = 25;
             doc.setFontSize(10);
             prescriptionData.drugs.forEach((drug, index) => {
-                if (yOffset + 25 > pageHeight) { 
+                if (yOffset + 25 > pageHeight-20) { 
                     doc.addPage(); 
-                    yOffset = 20; 
+                    yOffset = 60; 
+
+                    // Add the logo to the PDF
+                    doc.addImage(logoBase64, 'PNG', logoX, logoY, logoWidth, logoHeight);
+
+                    // Title position
+                    const title = 'e-PrescripChain';
+                    doc.setFontSize(20);
+                    doc.text(title, logoX + logoWidth +2, logoY + logoHeight / 2+3); 
+
+                    doc.setFontSize(10);
+                    // Add QR code to the PDF
+                    const qrCodeSize = 30; 
+                    doc.addImage(qrCodeBase64, 'PNG', 151, logoY + logoHeight, qrCodeSize, qrCodeSize); 
+                    doc.text(`ID: ${prescriptionID}`, 155, logoY + logoHeight+32);
+
                 }
                 doc.setFont('Helvetica', 'bold');
                 doc.text(`Drug ${index + 1}: ${drug.name}`, xOffset, yOffset);
@@ -186,11 +201,11 @@ const PreviewPrescription = ({ prescriptionID, onBack }) => {
 
             // Set PDF Metadata
             doc.setProperties({
-            title: 'Prescription Document',
+            title: 'e-Prescription Document',
             author: 'e-PrescripChain System',
             subject: 'Prescription Details',
             keywords: 'prescription, medical, drug',
-            creator: 'e-PrescripChain'
+            creator: 'butchdc@gmail.com'
             });
 
             return doc.output('blob');
@@ -205,7 +220,7 @@ const PreviewPrescription = ({ prescriptionID, onBack }) => {
             <div style={{ height: '100%' }}>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '10px' }}>
                     <button 
-                        className="btn btn-sm btn-primary"
+                        className="btn btn-sm btn-danger"
                         onClick={onBack}
                     >
                         Close Preview

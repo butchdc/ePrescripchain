@@ -113,6 +113,7 @@ const PrescriptionForm = () => {
             // Extract the prescription ID from the event
             const prescriptionCreatedEvent = tx.events.PrescriptionCreated.returnValues;
             const prescriptionID = prescriptionCreatedEvent.prescriptionID;
+        
     
             const prescriptionIDNumber = Number(prescriptionID)
             // Save the prescription details to the database
@@ -121,7 +122,7 @@ const PrescriptionForm = () => {
                 ipfsHash,
                 createdBy: physicianAddress,
                 date: Date.now(),
-                prescriptionID: prescriptionIDNumber, 
+                prescriptionID:prescriptionIDNumber
             });
 
             // Reset form state after successful submission

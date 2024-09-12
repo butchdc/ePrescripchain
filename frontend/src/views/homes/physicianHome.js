@@ -20,6 +20,15 @@ const PhysicianHome = () => {
 
     const closeButtonRef = useRef(null);
 
+    const statusDescriptions = [
+        "Awaiting Pharmacy Assignment",
+        "Awaiting For Confirmation",
+        "Preparing",
+        "Ready For Collection",
+        "Collected",
+        "Cancelled"
+    ];
+
     useEffect(() => {
         const initialize = async () => {
             try {
@@ -76,22 +85,14 @@ const PhysicianHome = () => {
 
                                     const patientIPFSHash = await contracts.registrationContract.methods.getPatientIPFSHash(patientAddress).call();
                                     const patientData = await downloadFromIPFS(patientIPFSHash);
-
-                                    const statusDescriptions = [
-                                        "Created",              
-                                        "Assigned",     
-                                        "ReadyForCollection",   
-                                        "Collected",            
-                                        "Cancelled"             
-                                    ];
-                                    
+                                    console.log(prescription.prescriptionID);
                                     const prescriptionData = await contracts.prescriptionContract.methods.accessPrescription(prescription.prescriptionID).call({ from: currentUser });
 
-                                    let pharmacyData=null;
-                                    if (prescriptionData[2]>0) {
+                                    let pharmacyData = null;
+                                    if (prescriptionData[2] > 0) {
                                         const pharmacyAddress = await contracts.prescriptionContract.methods.getAssignedPharmacy(
                                             prescription.prescriptionID
-                                        ).call({from: currentUser});
+                                        ).call({ from: currentUser });
                                         const pharmacyIPFSHash = await contracts.registrationContract.methods.getPharmacyIPFSHash(pharmacyAddress).call();
                                         pharmacyData = await downloadFromIPFS(pharmacyIPFSHash);
                                     }
@@ -104,7 +105,7 @@ const PhysicianHome = () => {
                                         date: prescription.date,
                                         pharmacyName: pharmacyData ? pharmacyData.pharmacyName : null,
                                         pharmacyAddress: pharmacyData ? pharmacyData.pharmacyAddress : null,
-                                        status: statusDescriptions[prescriptionData[2]]
+                                        status: prescriptionData[2]
                                     };
                                 } catch (err) {
                                     console.error(`Failed to fetch data for patient ${prescription.address}:`, err);
@@ -148,9 +149,26 @@ const PhysicianHome = () => {
         setSelectedPrescriptionIDForAssigning(prescriptionID);
     };
 
-    if (selectedPrescriptionID) {
-        return <PreviewPrescription prescriptionID={selectedPrescriptionID} onBack={handleBack} />;
+    const handleCancel = async (prescriptionID) => {
+        try {
+            // Interact with the blockchain to cancel the prescription
+            await contracts.prescriptionContract.methods.cancelPrescription(prescriptionID).send({ from: currentUser });
+    
+            // Send DELETE request to backend
+            await axios.delete(`${apiBaseURL}prescriptions/${prescriptionID}`);
+    
+            // Optionally, update the UI or state
+            setPrescriptions((prevPrescriptions) =>
+                prevPrescriptions.filter((prescription) => prescription.id !== prescriptionID)
+            );
+    
+            alert('Prescription has been cancelled.');
+        } catch (err) {
+            console.error('Failed to cancel prescription:', err);
+            alert('Failed to cancel prescription.');
+        }
     };
+    
 
     const handleAssignmentSuccess = () => {
         setAssignmentSuccess(true);
@@ -158,8 +176,10 @@ const PhysicianHome = () => {
             closeButtonRef.current.click();
         }
     };
-    
 
+    if (selectedPrescriptionID) {
+        return <PreviewPrescription prescriptionID={selectedPrescriptionID} onBack={handleBack} />;
+    };
 
     return (
         <div className="container bgcolor2 p-3">
@@ -193,39 +213,48 @@ const PhysicianHome = () => {
                                             </div>
                                         </td>
                                         <td className='text-center'>{prescription.patientNHI}</td>
-                                        <td className='text-center'>{prescription.status}</td>
+                                        <td className={`text-center`}>
+                                            {statusDescriptions[prescription.status]}
+                                        </td>
+
                                         <td className="text-center">
                                             {!prescription.pharmacyName ? (
                                                 <button 
-                                                    className="btn btn-sm btn-warning "
+                                                    className="btn btn-sm btn-warning"
                                                     data-bs-toggle="modal"
                                                     data-bs-target="#assignPharmacyModal"
-                                                    onClick={()=>handleAssign(prescription.id)}
+                                                    onClick={() => handleAssign(prescription.id)}
                                                 >
                                                     Assign Pharmacy
                                                 </button>
-                                            ):
-                                            <div className="vstack">
-                                                <div className='m-0 p-0'>{prescription.pharmacyName}</div>
-                                                <div style={{ fontSize: 10 }}>{prescription.pharmacyAddress}</div>
-                                            </div>
-                                            }
+                                            ) : (
+                                                <div className="vstack">
+                                                    <div className='m-0 p-0'>{prescription.pharmacyName}</div>
+                                                    <div style={{ fontSize: 10 }}>{prescription.pharmacyAddress}</div>
+                                                </div>
+                                            )}
                                         </td>
                                         <td className='text-center'>
-      
+                                            <button 
+                                                className="btn btn-sm btn-primary"
+                                                onClick={() => handleView(prescription.id)}
+                                            >
+                                                View 
+                                            </button>
+                                            {(prescription.status === 0n || prescription.status === 1n)  && (
                                                 <button 
-                                                    className="btn btn-sm btn-primary"
-                                                    onClick={() => handleView(prescription.id)}
+                                                    className="btn btn-sm btn-danger ms-2"
+                                                    onClick={() => handleCancel(prescription.id)}
                                                 >
-                                                    View Details
+                                                    Cancel
                                                 </button>
-
+                                            )}
                                         </td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="6" className="text-center">No prescriptions found</td>
+                                    <td colSpan="7" className="text-center">No prescriptions found</td>
                                 </tr>
                             )}
                         </tbody>
