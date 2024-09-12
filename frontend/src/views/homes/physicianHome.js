@@ -191,29 +191,28 @@ const PhysicianHome = () => {
                     <table className="table table-bordered table-striped mt-3">
                         <thead>
                             <tr>
-                                <th className='text-center'>Prescription ID</th>                            
+                                <th className='col-2 text-center'>Prescription ID</th>                            
                                 <th className='text-center'>Date</th>
-                                <th>Patient</th>
-                                <th className='text-center'>Patient NHI</th>
-                                <th className='text-center'>Status</th>
+                                <th className=''>Patient</th>
+                                <th className='col-2 text-center'>Status</th>
                                 <th className='text-center'>Pharmacy</th>
-                                <th className='text-center'>Action</th>
+                                <th className='col-2 text-center '>Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             {prescriptions.length > 0 ? (
                                 prescriptions.map((prescription, index) => (
                                     <tr key={index}>
-                                        <td className='text-center'>{prescription.id}</td>                                    
+                                        <td className='text-center' style={{fontSize:12}}>{prescription.id}</td>                                    
                                         <td className='text-center'>{formatDate(prescription.date)}</td>
                                         <td>
                                             <div className="vstack">
                                                 <div className='m-0 p-0'>{prescription.patientName}</div>
+                                                <div>{prescription.patientNHI}</div>
                                                 <div style={{ fontSize: 10 }}>{prescription.patientAddress}</div>
                                             </div>
                                         </td>
-                                        <td className='text-center'>{prescription.patientNHI}</td>
-                                        <td className={`text-center`}>
+                                        <td style={{ fontSize: 14 }} className={`text-center`}>
                                             {statusDescriptions[prescription.status]}
                                         </td>
 

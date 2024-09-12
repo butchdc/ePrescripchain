@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { initWeb3, initContracts } from '../../utils/web3utils';
 import { getUserRoleAndAttributes } from '../../utils/userqueryutils';
 import { uploadToIPFS, savePrescriptionToDB } from '../../utils/apiutils';
+import { v4 as uuidv4 } from 'uuid'; 
 
 const PrescriptionForm = () => {
     const [physicianAddress, setPhysicianAddress] = useState('');
@@ -60,8 +61,8 @@ const PrescriptionForm = () => {
                 setError(null);
             }
         } catch (err) {
-            //console.error("Error verifying patient address:", err);
-            // setError("Error verifying patient address");
+            console.error("Error verifying patient address:", err);
+            setError("Error verifying patient address");
             setIsPatientRegistered(false);
             setPatientAttributes({});
         }
@@ -107,22 +108,20 @@ const PrescriptionForm = () => {
             const web3 = await initWeb3();
             const { prescriptionContract } = await initContracts(web3);
 
-            // Call prescriptionCreation method on the smart contract
-            const tx = await prescriptionContract.methods.prescriptionCreation(patientAddress, ipfsHash).send({ from: physicianAddress });
+            // Generate UUID
+            const prescriptionID = uuidv4().replace(/-/g, ''); 
+            //const prescriptionID = uuidv4();
 
-            // Extract the prescription ID from the event
-            const prescriptionCreatedEvent = tx.events.PrescriptionCreated.returnValues;
-            const prescriptionID = prescriptionCreatedEvent.prescriptionID;
-        
-    
-            const prescriptionIDNumber = Number(prescriptionID)
+            // Call prescriptionCreation method on the smart contract
+            await prescriptionContract.methods.prescriptionCreation(prescriptionID, patientAddress, ipfsHash).send({ from: physicianAddress });
+
             // Save the prescription details to the database
             await savePrescriptionToDB({
                 address: patientAddress,
                 ipfsHash,
                 createdBy: physicianAddress,
                 date: Date.now(),
-                prescriptionID:prescriptionIDNumber
+                prescriptionID // Save the UUID directly
             });
 
             // Reset form state after successful submission

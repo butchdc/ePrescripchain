@@ -7,11 +7,10 @@ contract Prescription {
 
     // State Variables
     Registration public reg_contract;
-    uint256 private prescriptionCounter;
 
     // Structs
     struct PrescriptionDetail {
-        uint256 prescriptionID;
+        string prescriptionID; // Changed from bytes16 to string
         address patient;
         string IPFShash;
         PrescriptionStatus status;
@@ -19,9 +18,9 @@ contract Prescription {
     }
 
     // Mappings
-    mapping(uint256 => mapping(address => bool)) public hasPharmacySelected; 
-    mapping(uint256 => PrescriptionDetail) public prescriptions;
-    mapping(uint256 => address) public prescriptionToPharmacy;
+    mapping(string => mapping(address => bool)) public hasPharmacySelected; 
+    mapping(string => PrescriptionDetail) public prescriptions;
+    mapping(string => address) public prescriptionToPharmacy;
 
     // Enums
     enum PrescriptionStatus { AwaitingPharmacyAssignment, AwaitingForConfirmation, Preparing, ReadyForCollection, Collected, Cancelled }
@@ -29,17 +28,17 @@ contract Prescription {
     // Events
     event PharmacySelected(address indexed _pharmacy);
     event PrescriptionCreated(
-        uint256 indexed prescriptionID,
+        string indexed prescriptionID, // Changed from bytes16 to string
         address indexed physician,
         address indexed patient,
         string IPFShash
     );
-    event PrescriptionAccepted(uint256 indexed prescriptionID, address _pharmacy);
-    event PrescriptionRejected(uint256 indexed prescriptionID, address _pharmacy);
-    event MedicationIsPrepared(uint256 indexed prescriptionID, address _pharmacy, address patient);
-    event MedicationIsCollected(uint256 indexed prescriptionID, address patient);
-    event PrescriptionCancelled(uint256 indexed prescriptionID, address patient);
-    event PrescriptionStatusUpdated(uint256 indexed prescriptionID, PrescriptionStatus newStatus);
+    event PrescriptionAccepted(string indexed prescriptionID, address _pharmacy); // Changed from bytes16 to string
+    event PrescriptionRejected(string indexed prescriptionID, address _pharmacy); // Changed from bytes16 to string
+    event MedicationIsPrepared(string indexed prescriptionID, address _pharmacy, address patient); // Changed from bytes16 to string
+    event MedicationIsCollected(string indexed prescriptionID, address patient); // Changed from bytes16 to string
+    event PrescriptionCancelled(string indexed prescriptionID, address patient); // Changed from bytes16 to string
+    event PrescriptionStatusUpdated(string indexed prescriptionID, PrescriptionStatus newStatus); // Changed from bytes16 to string
 
     // Modifiers
     modifier onlyPhysician() {
@@ -57,7 +56,7 @@ contract Prescription {
         _;
     }
 
-    modifier onlyAuthorized(uint256 _prescriptionID) {
+    modifier onlyAuthorized(string memory _prescriptionID) {
         PrescriptionDetail memory detail = prescriptions[_prescriptionID];
         bool isPharmacy = hasPharmacySelected[_prescriptionID][msg.sender];
         
@@ -70,7 +69,7 @@ contract Prescription {
         _;
     }
 
-    modifier onlyCreator(uint256 _prescriptionID) {
+    modifier onlyCreator(string memory _prescriptionID) {
         PrescriptionDetail memory detail = prescriptions[_prescriptionID];
         require(msg.sender == detail.physician, "Only the physician who created this prescription can access it");
         _;
@@ -79,43 +78,42 @@ contract Prescription {
     // Constructor
     constructor(address registrationSCAddress) {
         reg_contract = Registration(registrationSCAddress);
-        prescriptionCounter = 1;
     }
 
     // Functions
     function prescriptionCreation(
+        string memory _prescriptionID, // Changed from bytes16 to string
         address _patient,
         string memory _IPFShash
-    ) public onlyPhysician returns (uint256) {
-        uint256 prescriptionID = prescriptionCounter++;
+    ) public onlyPhysician {
+        require(prescriptions[_prescriptionID].patient == address(0), "Prescription ID already exists"); // Ensure ID is unique
+
         PrescriptionDetail memory detail = PrescriptionDetail({
-            prescriptionID: prescriptionID,
+            prescriptionID: _prescriptionID,
             patient: _patient,
             IPFShash: _IPFShash,
             status: PrescriptionStatus.AwaitingPharmacyAssignment,
             physician: msg.sender
         });
 
-        prescriptions[prescriptionID] = detail;
+        prescriptions[_prescriptionID] = detail;
 
         emit PrescriptionCreated(
-            prescriptionID,
+            _prescriptionID,
             msg.sender,
             _patient,
             _IPFShash
         );
-
-        return prescriptionID;
     }
 
-    function accessPrescription(uint256 _prescriptionID) public view onlyAuthorized(_prescriptionID) returns (address, string memory, PrescriptionStatus) {
+    function accessPrescription(string memory _prescriptionID) public view onlyAuthorized(_prescriptionID) returns (address, string memory, PrescriptionStatus) {
         PrescriptionDetail memory detail = prescriptions[_prescriptionID];
         require(detail.patient != address(0), "Prescription does not exist");
 
         return (detail.patient, detail.IPFShash, detail.status);
     }
 
-    function selectPharmacy(uint256 _prescriptionID, address _pharmacyAddress) public {
+    function selectPharmacy(string memory _prescriptionID, address _pharmacyAddress) public {
         require(reg_contract.Pharmacy(_pharmacyAddress), "Only registered pharmacies can be selected");
 
         PrescriptionDetail storage detail = prescriptions[_prescriptionID];
@@ -135,7 +133,7 @@ contract Prescription {
         emit PrescriptionStatusUpdated(_prescriptionID, detail.status);
     }
 
-    function acceptPrescription(uint256 _prescriptionID) public onlyRegisteredPharmacies {
+    function acceptPrescription(string memory _prescriptionID) public onlyRegisteredPharmacies {
         PrescriptionDetail storage detail = prescriptions[_prescriptionID];
         require(detail.patient != address(0), "Prescription does not exist");
         require(detail.status == PrescriptionStatus.AwaitingForConfirmation, "Prescription is not in AwaitingForConfirmation status");
@@ -147,7 +145,7 @@ contract Prescription {
         emit PrescriptionStatusUpdated(_prescriptionID, detail.status);
     }
 
-    function rejectPrescription(uint256 _prescriptionID) public onlyRegisteredPharmacies {
+    function rejectPrescription(string memory _prescriptionID) public onlyRegisteredPharmacies {
         PrescriptionDetail storage detail = prescriptions[_prescriptionID];
         require(detail.patient != address(0), "Prescription does not exist");
         require(detail.status == PrescriptionStatus.AwaitingForConfirmation, "Prescription is not in AwaitingForConfirmation status");
@@ -161,7 +159,7 @@ contract Prescription {
         emit PrescriptionStatusUpdated(_prescriptionID, detail.status);
     }
 
-    function medicationPreparation(uint256 _prescriptionID) public onlyRegisteredPharmacies {
+    function medicationPreparation(string memory _prescriptionID) public onlyRegisteredPharmacies {
         PrescriptionDetail storage detail = prescriptions[_prescriptionID];
         require(detail.patient != address(0), "Prescription does not exist");
         require(detail.status == PrescriptionStatus.Preparing, "Prescription is not in Preparing status");
@@ -173,7 +171,7 @@ contract Prescription {
         emit PrescriptionStatusUpdated(_prescriptionID, detail.status);
     }
 
-    function medicationCollection(uint256 _prescriptionID) public onlyRegisteredPharmacies {
+    function medicationCollection(string memory _prescriptionID) public onlyRegisteredPharmacies {
         PrescriptionDetail storage detail = prescriptions[_prescriptionID];
         require(detail.patient != address(0), "Prescription does not exist");
         require(detail.status == PrescriptionStatus.ReadyForCollection, "Medication is not ready for collection");
@@ -185,8 +183,7 @@ contract Prescription {
         emit PrescriptionStatusUpdated(_prescriptionID, detail.status);
     }
 
-
-    function cancelPrescription(uint256 _prescriptionID) public onlyCreator(_prescriptionID) {
+    function cancelPrescription(string memory _prescriptionID) public onlyCreator(_prescriptionID) {
         PrescriptionDetail storage detail = prescriptions[_prescriptionID];
         require(detail.patient != address(0), "Prescription does not exist");
         require(detail.status == PrescriptionStatus.AwaitingPharmacyAssignment || detail.status == PrescriptionStatus.AwaitingForConfirmation, "Prescription cannot be cancelled");
@@ -196,7 +193,7 @@ contract Prescription {
         emit PrescriptionStatusUpdated(_prescriptionID, detail.status);
     }
 
-    function getAssignedPharmacy(uint256 _prescriptionID) public view onlyAuthorized(_prescriptionID) returns (address) {
+    function getAssignedPharmacy(string memory _prescriptionID) public view onlyAuthorized(_prescriptionID) returns (address) {
         return prescriptionToPharmacy[_prescriptionID];
     }
 }

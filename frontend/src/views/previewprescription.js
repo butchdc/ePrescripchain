@@ -136,11 +136,13 @@ const PreviewPrescription = ({ prescriptionID, onBack }) => {
             // Add QR code to the PDF
             const qrCodeSize = 30; 
             doc.addImage(qrCodeBase64, 'PNG', 151, logoY + logoHeight, qrCodeSize, qrCodeSize); 
-            doc.text(`ID: ${prescriptionID}`, 155, logoY + logoHeight+32);
+            doc.setFontSize(6);
+            doc.text(`${prescriptionID}`, 148, logoY + logoHeight+32);
+            doc.setFontSize(10);
 
             // Add RxDate
             const date = new Date(prescriptionData.date);
-            doc.text(`Rx Date: ${date.toLocaleDateString('en-GB')}`, 155, logoY + logoHeight + 38);
+            doc.text(`Rx Date: ${date.toLocaleDateString('en-GB')}`, 150, logoY + logoHeight + 38);
 
             // Add prescription details
             doc.setFont('Helvetica', 'bold');
@@ -168,7 +170,9 @@ const PreviewPrescription = ({ prescriptionID, onBack }) => {
                     // Add QR code to the PDF
                     const qrCodeSize = 30; 
                     doc.addImage(qrCodeBase64, 'PNG', 151, logoY + logoHeight, qrCodeSize, qrCodeSize); 
-                    doc.text(`ID: ${prescriptionID}`, 155, logoY + logoHeight+32);
+                    doc.setFontSize(8);
+                    doc.text(`${prescriptionID}`, 148, logoY + logoHeight+32);
+                    doc.setFontSize(10);
 
                 }
                 doc.setFont('Helvetica', 'bold');
