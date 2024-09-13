@@ -49,6 +49,8 @@ const AccessPrescription = () => {
         initialize();
     }, []);
 
+    const formatDate = (timestamp) => new Date(timestamp).toISOString().split('T')[0];
+
     const fetchPrescriptionDetails = useCallback(async () => {
         if (!web3 || !contracts || !currentUser || !prescriptionID) return;
 
@@ -61,6 +63,8 @@ const AccessPrescription = () => {
             const status = accessPrescriptionData[2];
 
             const prescriptionData = await downloadFromIPFS(accessPrescriptionData[1]);
+
+            console.log(prescriptionData);
             const physicianIPFSHash = await contracts.registrationContract.methods.getPhysicianIPFSHash(prescriptionData.physicianAddress).call();
             const physicianData = await downloadFromIPFS(physicianIPFSHash);
 
@@ -75,6 +79,7 @@ const AccessPrescription = () => {
             }
 
             const date = new Date(prescriptionData.date).toLocaleDateString('en-GB');
+
             setPrescriptionDetails({
                 prescription: prescriptionData,
                 physician: physicianData,
@@ -163,36 +168,49 @@ const AccessPrescription = () => {
                         </div>
                         <div className='col-auto hstack gap-2'>
                             {(role === 'Physician' || role === 'Pharmacy') &&
-                                <button className='btn btn-sm btn-info' onClick={handlePrint}>
-                                    Print
+                                <button className='btn btn-sm btn-primary' onClick={handlePrint}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" className="bi bi-printer-fill" viewBox="0 0 16 16">
+                                    <path d="M5 1a2 2 0 0 0-2 2v1h10V3a2 2 0 0 0-2-2zm6 8H5a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-3a1 1 0 0 0-1-1"/>
+                                    <path d="M0 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1v-2a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v2H2a2 2 0 0 1-2-2zm2.5 1a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1"/>
+                                    </svg>
                                 </button>
                             }
                             {(role === 'Physician' && (prescriptionDetails.status === 0n || prescriptionDetails.status === 1n)) &&
                                 <button className='btn btn-sm btn-danger' onClick={() => handleAction('cancelPrescription')}>
-                                    Cancel
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" className="bi bi-x-circle-fill" viewBox="0 0 16 16">
+                                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293z"/>
+                                    </svg>
                                 </button>
                             }
                             {role === 'Pharmacy' && prescriptionDetails.status === 1n &&
                                 <div className="hstack gap-2">
                                     <button className="btn btn-sm btn-success" onClick={() => handleAction('acceptPrescription')}>
-                                        Accept
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" className="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                                        </svg>
                                     </button>
                                     <button className="btn btn-sm btn-danger" onClick={() => handleAction('rejectPrescription')}>
-                                        Reject
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" className="bi bi-x-circle-fill" viewBox="0 0 16 16">
+                                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293z"/>
+                                        </svg>
                                     </button>
                                 </div>
                             }
                             {role === 'Pharmacy' && prescriptionDetails.status === 2n &&
                                 <div className="hstack gap-2">
                                     <button className="btn btn-sm btn-info" onClick={() => handleAction('medicationPreparation')}>
-                                        Medication Ready
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" className="bi bi-capsule-pill" viewBox="0 0 16 16">
+                                        <path d="M11.02 5.364a3 3 0 0 0-4.242-4.243L1.121 6.778a3 3 0 1 0 4.243 4.243l5.657-5.657Zm-6.413-.657 2.878-2.879a2 2 0 1 1 2.829 2.829L7.435 7.536zM12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8m-.5 1.042a3 3 0 0 0 0 5.917zm1 5.917a3 3 0 0 0 0-5.917z"/>
+                                        </svg>
                                     </button>
                                 </div>
                             }
                             {role === 'Pharmacy' && prescriptionDetails.status === 3n &&
                                 <div className="hstack gap-2">
                                     <button className="btn btn-sm btn-success" onClick={() => handleAction('medicationCollection')}>
-                                        Medication Collected
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" className="bi bi-bag-check-fill" viewBox="0 0 16 16">
+                                        <path fill-rule="evenodd" d="M10.5 3.5a2.5 2.5 0 0 0-5 0V4h5zm1 0V4H15v10a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V4h3.5v-.5a3.5 3.5 0 1 1 7 0m-.646 5.354a.5.5 0 0 0-.708-.708L7.5 10.793 6.354 9.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0z"/>
+                                        </svg>
                                     </button>
                                 </div>
                             }

@@ -116,10 +116,6 @@ const Navbar = () => {
                                     <Link className="dropdown-item" to="/ipfs-query">IPFS Query</Link>
                                 </div>
                             </li>
-                            <li className="nav-item">
-                                <Link className="nav-link" to="/info">About</Link>
-                            </li>
-
                         </>
                     )}
                     {role === 'Physician' && (
@@ -138,10 +134,16 @@ const Navbar = () => {
                     {role === 'Pharmacy' && (
                         <>
                             <li className="nav-item">
+                                <Link className="nav-link" to="/">Home</Link>
+                            </li>
+                            <li className="nav-item">
                                 <Link className="nav-link" to="/access-prescription">Access Prescription</Link>
                             </li>
                         </>
                     )}
+                    <li className="nav-item">
+                        <Link className="nav-link" to="/info">About</Link>
+                    </li>
                 </ul>
                 {role != 'Account is not Registered!' ? 
                 <div className="text-light">

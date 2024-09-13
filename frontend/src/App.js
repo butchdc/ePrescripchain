@@ -16,6 +16,7 @@ import Sample from './views/sample';
 import RegulatoryHome from './views/homes/regulatoryHome';
 import PhysicianHome from './views/homes/physicianHome';
 import AccessPrescription from './views/forms/accessprescription';
+import PharmacyHome from './views/homes/pharmacyHome';
 
 // Component to handle errors
 const ErrorBoundary = ({ error, children }) => {
@@ -74,6 +75,7 @@ function App() {
                   )}
                   {role === 'Pharmacy' && (
                     <>
+                      <Route path='/' element={<PharmacyHome />} />
                       <Route path='/access-prescription/' element={<AccessPrescription />} />
                     </>
                   )}

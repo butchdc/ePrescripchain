@@ -61,7 +61,7 @@ const PrescriptionForm = () => {
         physicianAddress,
         patientAddress,
         drugs: drugs.map(({ name, sig, mitte, mitteUnit, repeat }) => ({ name, sig, mitte, mitteUnit, repeat })),
-        date: new Date().toLocaleString()
+        date: new Date()
     });
 
     const handleSubmit = async (e) => {
@@ -79,8 +79,8 @@ const PrescriptionForm = () => {
                 throw new Error('Patient is not registered');
             }
 
-            //const prescriptionID = uuidv4().replace(/-/g, '');
-            const prescriptionID = uuidv4();
+            const prescriptionID = uuidv4().replace(/-/g, '');
+            //const prescriptionID = uuidv4();
 
             const dataToUpload = prepareDataForIPFS(prescriptionID);
             const ipfsHash = await uploadToIPFS(dataToUpload);
@@ -88,7 +88,7 @@ const PrescriptionForm = () => {
             const web3 = await initWeb3();
             const { prescriptionContract } = await initContracts(web3);
 
-            await prescriptionContract.methods.prescriptionCreation(prescriptionID, patientAddress, ipfsHash).send({ from: physicianAddress });
+            await prescriptionContract.methods.prescriptionCreation(prescriptionID.toString(), patientAddress, ipfsHash).send({ from: physicianAddress });
 
 
             await savePrescriptionToDB({
@@ -113,7 +113,7 @@ const PrescriptionForm = () => {
 
     return (
         <div className="container mt-3 bgcolor2">
-            <h4 className="mb-2">Prescription Form</h4>
+            <h4 className="mb-2">Create Prescription</h4>
             <form onSubmit={handleSubmit} className="needs-validation" noValidate>
                 <div className="form-group mb-3">
                     <label htmlFor="patientAddress" className="smallfont">Patient Address</label>

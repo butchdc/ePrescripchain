@@ -38,9 +38,7 @@ function PharmacySelection({ prescriptionID, onAssignmentSuccess }) {
         const fetchPrescriptionData = async () => {
             setLoading(true);
             try {
-                console.log(`${prescriptionID} : ${currentUser}`);
                 const prescriptionData = await contracts.prescriptionContract.methods.accessPrescription(prescriptionID).call({ from: currentUser });
-                console.log(prescriptionData);
                 const patientIPFSHash = await contracts.registrationContract.methods.getPatientIPFSHash(prescriptionData[0]).call();
                 const patientData = await downloadFromIPFS(patientIPFSHash);
                 setPrescriptionDetails({
