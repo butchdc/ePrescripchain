@@ -10,7 +10,7 @@ contract Prescription {
 
     // Structs
     struct PrescriptionDetail {
-        string prescriptionID; // Changed from bytes16 to string
+        string prescriptionID; 
         address patient;
         string IPFShash;
         PrescriptionStatus status;
@@ -28,17 +28,17 @@ contract Prescription {
     // Events
     event PharmacySelected(address indexed _pharmacy);
     event PrescriptionCreated(
-        string indexed prescriptionID, // Changed from bytes16 to string
+        string indexed prescriptionID, 
         address indexed physician,
         address indexed patient,
         string IPFShash
     );
-    event PrescriptionAccepted(string indexed prescriptionID, address _pharmacy); // Changed from bytes16 to string
-    event PrescriptionRejected(string indexed prescriptionID, address _pharmacy); // Changed from bytes16 to string
-    event MedicationIsPrepared(string indexed prescriptionID, address _pharmacy, address patient); // Changed from bytes16 to string
-    event MedicationIsCollected(string indexed prescriptionID, address patient); // Changed from bytes16 to string
-    event PrescriptionCancelled(string indexed prescriptionID, address patient); // Changed from bytes16 to string
-    event PrescriptionStatusUpdated(string indexed prescriptionID, PrescriptionStatus newStatus); // Changed from bytes16 to string
+    event PrescriptionAccepted(string indexed prescriptionID, address _pharmacy); 
+    event PrescriptionRejected(string indexed prescriptionID, address _pharmacy); 
+    event MedicationIsPrepared(string indexed prescriptionID, address _pharmacy, address patient); 
+    event MedicationIsCollected(string indexed prescriptionID, address patient); 
+    event PrescriptionCancelled(string indexed prescriptionID, address patient); 
+    event PrescriptionStatusUpdated(string indexed prescriptionID, PrescriptionStatus newStatus); 
 
     // Modifiers
     modifier onlyPhysician() {
@@ -82,11 +82,11 @@ contract Prescription {
 
     // Functions
     function prescriptionCreation(
-        string memory _prescriptionID, // Changed from bytes16 to string
+        string memory _prescriptionID,
         address _patient,
         string memory _IPFShash
     ) public onlyPhysician {
-        require(prescriptions[_prescriptionID].patient == address(0), "Prescription ID already exists"); // Ensure ID is unique
+        require(prescriptions[_prescriptionID].patient == address(0), "Prescription ID already exists"); 
 
         PrescriptionDetail memory detail = PrescriptionDetail({
             prescriptionID: _prescriptionID,

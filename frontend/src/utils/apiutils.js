@@ -173,3 +173,24 @@ export const savePrescriptionToDB = async (data) => {
         throw new Error('Failed to save prescription to the database');
     }
 };
+
+export const updateStatusToDB = async (prescriptionID, newStatus) => {
+    try {
+        const response = await axios.get(`${apiBaseURL}prescriptions`, {
+            params: { prescriptionID }
+        });
+        const prescriptions = response.data;
+        if (prescriptions.length === 0) {
+        throw new Error('No prescription found with the given ID.');
+        }
+        const prescription = prescriptions[0]; 
+        await axios.post(`${apiBaseURL}prescriptions`, {
+            ...prescription,
+            status: newStatus
+        });
+    } catch (error) {
+        console.error('Error updating prescription status to database:', error.message);
+        throw new Error('Failed to update prescription status to the database');
+    }
+
+};

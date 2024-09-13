@@ -10,7 +10,8 @@ db.serialize(() => {
         ipfsHash TEXT NOT NULL,
         createdBy TEXT NOT NULL,
         date INTEGER NOT NULL,
-        assignedTo TEXT
+        assignedTo TEXT,
+        status TEXT
     )
   `);
 });

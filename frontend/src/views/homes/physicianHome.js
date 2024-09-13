@@ -1,49 +1,56 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { initWeb3, initContracts } from '../../utils/web3utils';
-import { downloadFromIPFS } from '../../utils/apiutils';
+import { downloadFromIPFS, updateStatusToDB } from '../../utils/apiutils';
 import PreviewPrescription from '../previewprescription';
 import PharmacySelection from '../forms/pharmacyselection'; 
 
 const apiBaseURL = process.env.REACT_APP_API_BASE_URL;
 
+const statusDescriptions = [
+    "Awaiting Pharmacy Assignment",
+    "Awaiting For Confirmation",
+    "Preparing",
+    "Ready For Collection",
+    "Collected",
+    "Cancelled"
+];
+
 const PhysicianHome = () => {
-    const [prescriptions, setPrescriptions] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [web3, setWeb3] = useState(null);
-    const [currentUser, setCurrentUser] = useState('');
-    const [contracts, setContracts] = useState(null);
-    const [selectedPrescriptionID, setSelectedPrescriptionID] = useState(null);
-    const [selectedPrescriptionIDForAssigning, setSelectedPrescriptionIDForAssigning] = useState(null);
-    const [assignmentSuccess, setAssignmentSuccess] = useState(false);
+    const [state, setState] = useState({
+        prescriptions: [],
+        loading: true,
+        error: null,
+        web3: null,
+        currentUser: '',
+        contracts: null,
+        selectedPrescriptionID: null,
+        selectedPrescriptionIDForAssigning: null,
+        assignmentSuccess: false,
+    });
 
     const closeButtonRef = useRef(null);
-
-    const statusDescriptions = [
-        "Awaiting Pharmacy Assignment",
-        "Awaiting For Confirmation",
-        "Preparing",
-        "Ready For Collection",
-        "Collected",
-        "Cancelled"
-    ];
 
     useEffect(() => {
         const initialize = async () => {
             try {
                 const web3Instance = await initWeb3();
-                setWeb3(web3Instance);
-
                 const contractsInstance = await initContracts(web3Instance);
-                setContracts(contractsInstance);
-
                 const accounts = await web3Instance.eth.getAccounts();
-                setCurrentUser(accounts[0]);
+
+                setState(prevState => ({
+                    ...prevState,
+                    web3: web3Instance,
+                    contracts: contractsInstance,
+                    currentUser: accounts[0],
+                    loading: false,
+                }));
             } catch (err) {
-                setError(`Initialization error: ${err.message}`);
-            } finally {
-                setLoading(false);
+                setState(prevState => ({
+                    ...prevState,
+                    error: `Initialization error: ${err.message}`,
+                    loading: false,
+                }));
             }
         };
 
@@ -52,134 +59,123 @@ const PhysicianHome = () => {
 
     useEffect(() => {
         const fetchPrescriptions = async () => {
+            const { web3, currentUser, contracts } = state;
+
             if (!web3 || !currentUser || !contracts) return;
 
-            setLoading(true);
-            setAssignmentSuccess(false);
+            setState(prevState => ({ ...prevState, loading: true, assignmentSuccess: false }));
 
             try {
                 const response = await axios.get(`${apiBaseURL}prescriptions`, {
-                    params: { createdBy: currentUser }
-                });
-
-                let prescriptionsData = [];
-
-                if (response.data.message) {
-                    if (response.data.message.includes('No prescriptions found')) {
-                        prescriptionsData = [];
-                    } else {
-                        throw new Error(response.data.message);
+                    params: {
+                      createdBy: currentUser,
+                      status: 'In-Progress' 
                     }
-                } else if (Array.isArray(response.data)) {
-                    if (response.data.length === 0) {
-                        prescriptionsData = [];
-                    } else {
-                        prescriptionsData = await Promise.all(
-                            response.data.map(async (prescription) => {
-                                try {
-                                    const patientAddress = prescription.address;
+                  });
 
-                                    if (!web3.utils.isAddress(patientAddress)) {
-                                        throw new Error(`Invalid patient address: ${patientAddress}`);
-                                    }
-
-                                    const patientIPFSHash = await contracts.registrationContract.methods.getPatientIPFSHash(patientAddress).call();
-                                    const patientData = await downloadFromIPFS(patientIPFSHash);
-                                    console.log(prescription.prescriptionID);
-                                    const prescriptionData = await contracts.prescriptionContract.methods.accessPrescription(prescription.prescriptionID).call({ from: currentUser });
-
-                                    let pharmacyData = null;
-                                    if (prescriptionData[2] > 0) {
-                                        const pharmacyAddress = await contracts.prescriptionContract.methods.getAssignedPharmacy(
-                                            prescription.prescriptionID
-                                        ).call({ from: currentUser });
-                                        const pharmacyIPFSHash = await contracts.registrationContract.methods.getPharmacyIPFSHash(pharmacyAddress).call();
-                                        pharmacyData = await downloadFromIPFS(pharmacyIPFSHash);
-                                    }
-
-                                    return {
-                                        id: prescription.prescriptionID,
-                                        patientAddress: prescriptionData[0],
-                                        patientName: patientData.name,
-                                        patientNHI: patientData.nhiNumber,
-                                        date: prescription.date,
-                                        pharmacyName: pharmacyData ? pharmacyData.pharmacyName : null,
-                                        pharmacyAddress: pharmacyData ? pharmacyData.pharmacyAddress : null,
-                                        status: prescriptionData[2]
-                                    };
-                                } catch (err) {
-                                    console.error(`Failed to fetch data for patient ${prescription.address}:`, err);
-                                    return null; // Ensure we return null if there's an error to avoid processing faulty data
-                                }
-                            })
-                        );
-
-                        // Filter out any null entries from the data
-                        prescriptionsData = prescriptionsData.filter(data => data !== null);
-                    }
+                if (response.data.message && response.data.message.includes('No prescriptions found')) {
+                    setState(prevState => ({ ...prevState, prescriptions: [], error: null, loading: false }));
+                    return;
                 }
 
-                setPrescriptions(prescriptionsData);
-                setError(null);
+                const prescriptionsData = await Promise.all(
+                    response.data.map(async (prescription) => {
+                        try {
+                            const patientAddress = prescription.address;
+
+                            if (!web3.utils.isAddress(patientAddress)) {
+                                throw new Error(`Invalid patient address: ${patientAddress}`);
+                            }
+
+                            const patientIPFSHash = await contracts.registrationContract.methods.getPatientIPFSHash(patientAddress).call();
+                            const patientData = await downloadFromIPFS(patientIPFSHash);
+
+                            const prescriptionData = await contracts.prescriptionContract.methods.accessPrescription(prescription.prescriptionID).call({ from: currentUser });
+                            console.log(prescriptionData);
+
+                            let pharmacyData = null;
+                            if (prescriptionData[2] > 0n) {
+                                const pharmacyAddress = await contracts.prescriptionContract.methods.getAssignedPharmacy(prescription.prescriptionID).call({ from: currentUser });
+                                const pharmacyIPFSHash = await contracts.registrationContract.methods.getPharmacyIPFSHash(pharmacyAddress).call();
+                                pharmacyData = await downloadFromIPFS(pharmacyIPFSHash);
+                            }
+
+                            return {
+                                id: prescription.prescriptionID,
+                                patientAddress: prescriptionData[0],
+                                patientName: patientData.name,
+                                patientNHI: patientData.nhiNumber,
+                                date: prescription.date,
+                                pharmacyName: pharmacyData ? pharmacyData.pharmacyName : null,
+                                pharmacyAddress: pharmacyData ? pharmacyData.pharmacyAddress : null,
+                                status: prescriptionData[2]
+                            };
+                        } catch (err) {
+                            console.error(`Failed to fetch data for patient ${prescription.address}:`, err);
+                            return null;
+                        }
+                    })
+                );
+
+                setState(prevState => ({
+                    ...prevState,
+                    prescriptions: prescriptionsData.filter(data => data !== null),
+                    error: null,
+                    loading: false,
+                }));
             } catch (err) {
-                setError(`Failed to fetch prescriptions: ${err.message}`);
-                setPrescriptions([]);
-            } finally {
-                setLoading(false);
+                setState(prevState => ({
+                    ...prevState,
+                    error: `Failed to fetch prescriptions: ${err.message}`,
+                    prescriptions: [],
+                    loading: false,
+                }));
             }
         };
 
         fetchPrescriptions();
-    }, [web3, currentUser, contracts, assignmentSuccess]);
+    }, [state.web3, state.currentUser, state.contracts, state.assignmentSuccess]);
 
-    const formatDate = (timestamp) => {
-        const date = new Date(timestamp);
-        return date.toISOString().split('T')[0];
-    };
+    const formatDate = (timestamp) => new Date(timestamp).toISOString().split('T')[0];
 
-    const handleBack = () => {
-        setSelectedPrescriptionID(null);
-    };
+    const handleBack = () => setState(prevState => ({ ...prevState, selectedPrescriptionID: null }));
 
-    const handleView = (prescriptionID) => {
-        setSelectedPrescriptionID(prescriptionID);
-    };
+    const handleView = (prescriptionID) => setState(prevState => ({ ...prevState, selectedPrescriptionID: prescriptionID }));
 
-    const handleAssign = (prescriptionID) => {
-        setSelectedPrescriptionIDForAssigning(prescriptionID);
-    };
+    const handleAssign = (prescriptionID) => setState(prevState => ({ ...prevState, selectedPrescriptionIDForAssigning: prescriptionID }));
 
     const handleCancel = async (prescriptionID) => {
+        const { contracts, currentUser } = state;
         try {
-            // Interact with the blockchain to cancel the prescription
             await contracts.prescriptionContract.methods.cancelPrescription(prescriptionID).send({ from: currentUser });
-    
-            // Send DELETE request to backend
-            await axios.delete(`${apiBaseURL}prescriptions/${prescriptionID}`);
-    
-            // Optionally, update the UI or state
-            setPrescriptions((prevPrescriptions) =>
-                prevPrescriptions.filter((prescription) => prescription.id !== prescriptionID)
-            );
-    
+
+            await updateStatusToDB(prescriptionID, 'Cancelled')
+          
+
+            setState(prevState => ({
+                ...prevState,
+                prescriptions: prevState.prescriptions.filter(prescription => prescription.id !== prescriptionID),
+            }));
+
             alert('Prescription has been cancelled.');
         } catch (err) {
             console.error('Failed to cancel prescription:', err);
             alert('Failed to cancel prescription.');
         }
     };
-    
 
     const handleAssignmentSuccess = () => {
-        setAssignmentSuccess(true);
+        setState(prevState => ({ ...prevState, assignmentSuccess: true }));
         if (closeButtonRef.current) {
             closeButtonRef.current.click();
         }
     };
 
+    const { prescriptions, loading, error, selectedPrescriptionID, selectedPrescriptionIDForAssigning } = state;
+
     if (selectedPrescriptionID) {
         return <PreviewPrescription prescriptionID={selectedPrescriptionID} onBack={handleBack} />;
-    };
+    }
 
     return (
         <div className="container bgcolor2 p-3">
@@ -193,17 +189,17 @@ const PhysicianHome = () => {
                             <tr>
                                 <th className='col-2 text-center'>Prescription ID</th>                            
                                 <th className='text-center'>Date</th>
-                                <th className=''>Patient</th>
+                                <th>Patient</th>
                                 <th className='col-2 text-center'>Status</th>
                                 <th className='text-center'>Pharmacy</th>
-                                <th className='col-2 text-center '>Action</th>
+                                <th className='col-2 text-center'>Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             {prescriptions.length > 0 ? (
                                 prescriptions.map((prescription, index) => (
                                     <tr key={index}>
-                                        <td className='text-center' style={{fontSize:12}}>{prescription.id}</td>                                    
+                                        <td className='text-center' style={{ fontSize: 12 }}>{prescription.id}</td>
                                         <td className='text-center'>{formatDate(prescription.date)}</td>
                                         <td>
                                             <div className="vstack">
@@ -212,11 +208,10 @@ const PhysicianHome = () => {
                                                 <div style={{ fontSize: 10 }}>{prescription.patientAddress}</div>
                                             </div>
                                         </td>
-                                        <td style={{ fontSize: 14 }} className={`text-center`}>
+                                        <td className='text-center' style={{ fontSize: 14 }}>
                                             {statusDescriptions[prescription.status]}
                                         </td>
-
-                                        <td className="text-center">
+                                        <td className='text-center'>
                                             {!prescription.pharmacyName ? (
                                                 <button 
                                                     className="btn btn-sm btn-warning"
@@ -238,9 +233,9 @@ const PhysicianHome = () => {
                                                 className="btn btn-sm btn-primary"
                                                 onClick={() => handleView(prescription.id)}
                                             >
-                                                View 
+                                                View
                                             </button>
-                                            {(prescription.status === 0n || prescription.status === 1n)  && (
+                                            {(prescription.status === 0n || prescription.status === 1n) && (
                                                 <button 
                                                     className="btn btn-sm btn-danger ms-2"
                                                     onClick={() => handleCancel(prescription.id)}
@@ -253,7 +248,7 @@ const PhysicianHome = () => {
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="7" className="text-center">No prescriptions found</td>
+                                    <td colSpan="6" className="text-center">No prescriptions found</td>
                                 </tr>
                             )}
                         </tbody>
@@ -276,7 +271,8 @@ const PhysicianHome = () => {
                                         className="btn btn-secondary" 
                                         data-bs-dismiss="modal"
                                         ref={closeButtonRef}
-                                    >Close
+                                    >
+                                        Close
                                     </button>
                                 </div>
                             </div>

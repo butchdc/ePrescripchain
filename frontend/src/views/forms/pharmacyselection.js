@@ -8,15 +8,13 @@ const apiBaseURL = process.env.REACT_APP_API_BASE_URL;
 function PharmacySelection({ prescriptionID, onAssignmentSuccess }) {
     const [query, setQuery] = useState('');
     const [suggestions, setSuggestions] = useState([]);
-    const [selectedPharmacy, setSelectedPharmacy] = useState('');
+    const [selectedPharmacy, setSelectedPharmacy] = useState(null);
     const [web3, setWeb3] = useState(null);
     const [contracts, setContracts] = useState(null);
-    const [currentUser, setCurrentUser] = useState(''); 
+    const [currentUser, setCurrentUser] = useState('');
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(true);
     const [prescriptionDetails, setPrescriptionDetails] = useState(null);
-    const [successMessage, setSuccessMessage] = useState(null);
-    const [isLocked, setIsLocked] = useState(false);
 
     useEffect(() => {
         const initialize = async () => {
@@ -25,27 +23,25 @@ function PharmacySelection({ prescriptionID, onAssignmentSuccess }) {
                 setWeb3(web3Instance);
                 const contractsInstance = await initContracts(web3Instance);
                 setContracts(contractsInstance);
-
-                const accounts = await web3Instance.eth.getAccounts();
-                setCurrentUser(accounts[0]);
-
+                const [account] = await web3Instance.eth.getAccounts();
+                setCurrentUser(account);
             } catch (err) {
                 setError(`Initialization error: ${err.message}`);
             }
         };
-
         initialize();
     }, []);
 
     useEffect(() => {
+        if (!web3 || !contracts || !currentUser || !prescriptionID) return;
+
         const fetchPrescriptionData = async () => {
-            if (!web3 || !contracts || !currentUser || !prescriptionID) return;
             setLoading(true);
-            setError(false);
-            setSelectedPharmacy(null);
             try {
-                const accessPrescriptionData = await contracts.prescriptionContract.methods.accessPrescription(prescriptionID).call({ from: currentUser });
-                const patientIPFSHash = await contracts.registrationContract.methods.getPatientIPFSHash(accessPrescriptionData[0]).call();
+                console.log(`${prescriptionID} : ${currentUser}`);
+                const prescriptionData = await contracts.prescriptionContract.methods.accessPrescription(prescriptionID).call({ from: currentUser });
+                console.log(prescriptionData);
+                const patientIPFSHash = await contracts.registrationContract.methods.getPatientIPFSHash(prescriptionData[0]).call();
                 const patientData = await downloadFromIPFS(patientIPFSHash);
                 setPrescriptionDetails({
                     prescriptionID,
@@ -64,69 +60,52 @@ function PharmacySelection({ prescriptionID, onAssignmentSuccess }) {
     }, [web3, contracts, currentUser, prescriptionID]);
 
     useEffect(() => {
-        if (query.length >= 3) {
-            setSelectedPharmacy(null);
-            const timer = setTimeout(() => {
-                fetchSuggestions(query);
-            }, 300);
-
-            return () => clearTimeout(timer);
-        } else {
+        if (query.length < 3) {
             setSuggestions([]);
+            return;
         }
-    }, [query]);
 
-    const fetchSuggestions = async (searchTerm) => {
-        try {
-            const response = await axios.get(`${apiBaseURL}entities/pharmacies`, {
-                params: { pharmacyName: `%${searchTerm}%` }
-            });
-            setSuggestions(response.data);
-        } catch (error) {
-            console.error("Error fetching suggestions:", error);
-            setError('Error fetching pharmacies');
-        }
-    };
+        const fetchSuggestions = async () => {
+            try {
+                const response = await axios.get(`${apiBaseURL}entities/pharmacies`, {
+                    params: { pharmacyName: `%${query}%` }
+                });
+                setSuggestions(response.data);
+            } catch (error) {
+                console.error("Error fetching suggestions:", error);
+                setError('Error fetching pharmacies');
+            }
+        };
+
+        const timer = setTimeout(fetchSuggestions, 300);
+        return () => clearTimeout(timer);
+    }, [query]);
 
     const handleSelect = (pharmacy) => {
         setSelectedPharmacy(pharmacy);
-        setSuggestions([]);
         setQuery('');
+        setSuggestions([]);
     };
-    
+
     const handleAssign = async () => {
         if (!web3 || !contracts || !currentUser || !prescriptionID || !selectedPharmacy) {
             setError('Incomplete data for assignment');
             return;
         }
-    
+
         setLoading(true);
         try {
-            // Assign the pharmacy using the smart contract
             await contracts.prescriptionContract.methods
                 .selectPharmacy(prescriptionID, selectedPharmacy.address)
                 .send({ from: currentUser });
-    
-            // Fetch the current prescription details to update the assignedTo field
-            const response = await axios.get(`${apiBaseURL}prescriptions/`, {
-                params: { prescriptionID: prescriptionID }
-            });
-            const { prescriptionID: prevPrescriptionID, address: prevAddress, ipfsHash: prevIpfsHash, createdBy: prevCreatedBy, date: prevDate } = response.data[0];
 
-            // Update the assignedTo field in the backend database
-            await axios.post(`${apiBaseURL}prescriptions/`, {
-                prescriptionID: prevPrescriptionID,
-                address: prevAddress,
-                ipfsHash: prevIpfsHash,
-                createdBy: prevCreatedBy,
-                date: prevDate,
-                assignedTo: selectedPharmacy.address 
-            });
+            const { data: [prescription] = [] } = await axios.get(`${apiBaseURL}prescriptions`, { params: { prescriptionID } });
+            if (!prescription) throw new Error('No prescription found with the given ID.');
         
-            setIsLocked(true);
+            // Update the prescription with the assigned pharmacy
+            await axios.post(`${apiBaseURL}prescriptions`, { ...prescription, assignedTo: selectedPharmacy.address });
+
             onAssignmentSuccess();
-            setSuccessMessage('Pharmacy assigned successfully!');
-            
         } catch (err) {
             console.error('Error assigning pharmacy:', err);
             setError('Error assigning pharmacy');
@@ -134,8 +113,6 @@ function PharmacySelection({ prescriptionID, onAssignmentSuccess }) {
             setLoading(false);
         }
     };
-    
-    
 
     return (
         <div className="container">
@@ -147,7 +124,7 @@ function PharmacySelection({ prescriptionID, onAssignmentSuccess }) {
                     <div>{prescriptionDetails.patientNHI}</div>
                 </div>
             )}
-            {selectedPharmacy && !isLocked && (
+            {selectedPharmacy && (
                 <div>
                     <hr />
                     <h5>Selected Pharmacy:</h5>
@@ -157,14 +134,10 @@ function PharmacySelection({ prescriptionID, onAssignmentSuccess }) {
                     <button 
                         className="btn btn-sm btn-success"
                         onClick={handleAssign}
-                        disabled={isLocked}
                     >
                         Assign
                     </button>
                 </div>
-            )}
-            {successMessage && (
-                <div className="alert alert-success mt-3">{successMessage}</div>
             )}
             {error && <div className="alert alert-danger mt-3">{error}</div>}
             {loading && <div>Loading...</div>}
@@ -176,7 +149,6 @@ function PharmacySelection({ prescriptionID, onAssignmentSuccess }) {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Enter at least 3 characters to search available pharmacies..."
                 className="form-control"
-                disabled={isLocked}
             />
             <div className="mt-2">
                 {query.length >= 3 && (
@@ -187,7 +159,7 @@ function PharmacySelection({ prescriptionID, onAssignmentSuccess }) {
                                     key={pharmacy.address} 
                                     className="list-group-item"
                                     onClick={() => handleSelect(pharmacy)}
-                                    style={{ cursor: isLocked ? 'not-allowed' : 'pointer' }}
+                                    style={{ cursor: 'pointer' }}
                                 >
                                     <div className='vstack'>
                                         <div>{pharmacy.pharmacyName}</div>
@@ -196,7 +168,7 @@ function PharmacySelection({ prescriptionID, onAssignmentSuccess }) {
                                 </li>
                             ))}
                         </ul>
-                    ) : !selectedPharmacy && (
+                    ) : (
                         <div className="alert alert-info">No pharmacies found.</div>
                     )
                 )}

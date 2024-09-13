@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react';
 import { initWeb3, initContracts } from '../../utils/web3utils';
 import { getUserRoleAndAttributes } from '../../utils/userqueryutils';
 import { uploadToIPFS, savePrescriptionToDB } from '../../utils/apiutils';
-import { v4 as uuidv4 } from 'uuid'; 
+import { v4 as uuidv4 } from 'uuid';
 
 const PrescriptionForm = () => {
     const [physicianAddress, setPhysicianAddress] = useState('');
     const [patientAddress, setPatientAddress] = useState('');
     const [isPatientRegistered, setIsPatientRegistered] = useState(null);
     const [patientAttributes, setPatientAttributes] = useState({});
-    const [drugs, setDrugs] = useState([{ name: '', sig: '', mitte: '', mitteUnit: 'tablets', repeat: '' }]);
+    const [drugs, setDrugs] = useState([{ name: '', sig: '', mitte: '', mitteUnit: 'tablet(s)', repeat: '' }]);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -18,47 +18,35 @@ const PrescriptionForm = () => {
         const fetchUserAddress = async () => {
             try {
                 const web3 = await initWeb3();
-                const accounts = await web3.eth.getAccounts();
-                const userAddress = accounts[0];
+                const [userAddress] = await web3.eth.getAccounts();
                 setPhysicianAddress(userAddress);
             } catch (err) {
                 console.error("Error getting current address:", err);
                 setError("Error retrieving address");
             }
         };
-
         fetchUserAddress();
     }, []);
 
     const handleDrugChange = (index, e) => {
         const { name, value } = e.target;
-        const newDrugs = [...drugs];
-        newDrugs[index][name] = value;
-        setDrugs(newDrugs);
+        setDrugs(drugs.map((drug, i) => i === index ? { ...drug, [name]: value } : drug));
         setError(null);
     };
 
-    const addDrug = () => {
-        setDrugs([...drugs, { name: '', sig: '', mitte: '', mitteUnit: 'tablets', repeat: '' }]);
-    };
+    const addDrug = () => setDrugs([...drugs, { name: '', sig: '', mitte: '', mitteUnit: 'tablet(s)', repeat: '' }]);
 
-    const removeDrug = (index) => {
-        const newDrugs = drugs.filter((_, i) => i !== index);
-        setDrugs(newDrugs);
-    };
+    const removeDrug = (index) => setDrugs(drugs.filter((_, i) => i !== index));
 
     const verifyPatientAddress = async () => {
         try {
             const { role, attributes } = await getUserRoleAndAttributes(patientAddress);
-
             if (role === 'Patient') {
                 setIsPatientRegistered(true);
-                const { name, patientAddress, gender, dateOfBirth, nhiNumber } = attributes;
-                setPatientAttributes({ name, patientAddress, gender, dateOfBirth, nhiNumber }); 
+                setPatientAttributes(attributes);
             } else {
                 setIsPatientRegistered(false);
                 setPatientAttributes({});
-                setError(null);
             }
         } catch (err) {
             console.error("Error verifying patient address:", err);
@@ -68,21 +56,13 @@ const PrescriptionForm = () => {
         }
     };
 
-    const prepareDataForIPFS = () => {
-        const currentDate = new Date().toLocaleString();
-        return {
-            physicianAddress,
-            patientAddress,
-            drugs: drugs.map(drug => ({
-                name: drug.name,
-                sig: drug.sig,
-                mitte: drug.mitte,
-                mitteUnit: drug.mitteUnit,
-                repeat: drug.repeat
-            })),
-            date: currentDate
-        };
-    };
+    const prepareDataForIPFS = (prescriptionID) => ({
+        prescriptionID,
+        physicianAddress,
+        patientAddress,
+        drugs: drugs.map(({ name, sig, mitte, mitteUnit, repeat }) => ({ name, sig, mitte, mitteUnit, repeat })),
+        date: new Date().toLocaleString()
+    });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -91,45 +71,39 @@ const PrescriptionForm = () => {
         setSuccess(null);
 
         try {
-            // Check that all required fields are filled
-            if (!physicianAddress || !patientAddress || drugs.some(drug => !drug.name || !drug.sig || !drug.mitte || !drug.repeat)) {
+            if (!physicianAddress || !patientAddress || drugs.some(({ name, sig, mitte, repeat }) => !name || !sig || !mitte || !repeat)) {
                 throw new Error('All fields are required');
             }
 
-            if (isPatientRegistered === false) {
+            if (!isPatientRegistered) {
                 throw new Error('Patient is not registered');
             }
 
-            // Prepare the data to be uploaded to IPFS
-            const dataToUpload = prepareDataForIPFS();
+            //const prescriptionID = uuidv4().replace(/-/g, '');
+            const prescriptionID = uuidv4();
+
+            const dataToUpload = prepareDataForIPFS(prescriptionID);
             const ipfsHash = await uploadToIPFS(dataToUpload);
 
-            // Initialize Web3 and contract instances
             const web3 = await initWeb3();
             const { prescriptionContract } = await initContracts(web3);
 
-            // Generate UUID
-            const prescriptionID = uuidv4().replace(/-/g, ''); 
-            //const prescriptionID = uuidv4();
-
-            // Call prescriptionCreation method on the smart contract
             await prescriptionContract.methods.prescriptionCreation(prescriptionID, patientAddress, ipfsHash).send({ from: physicianAddress });
 
-            // Save the prescription details to the database
+
             await savePrescriptionToDB({
                 address: patientAddress,
                 ipfsHash,
                 createdBy: physicianAddress,
                 date: Date.now(),
-                prescriptionID // Save the UUID directly
+                prescriptionID,
+                status: 'In-Progress'
             });
 
-            // Reset form state after successful submission
             setPatientAddress('');
-            setDrugs([{ name: '', sig: '', mitte: '', mitteUnit: 'tablets', repeat: '' }]);
+            setDrugs([{ name: '', sig: '', mitte: '', mitteUnit: 'tablet(s)', repeat: '' }]);
             setIsPatientRegistered(null);
             setSuccess('Prescription submitted successfully!');
-            setError(null);
         } catch (err) {
             setError(err.message);
         } finally {
@@ -168,14 +142,16 @@ const PrescriptionForm = () => {
                             The patient address is not registered.
                         </div>
                     )}
-                    {isPatientRegistered === true && (
+                    {isPatientRegistered && (
                         <div className="mt-3">
                             <div className='smallfont'>Patient Information</div>
                             <table className="table table-sm table-striped">
                                 <tbody>
                                     {Object.entries(patientAttributes).map(([key, value]) => (
                                         <tr key={key}>
-                                            <td style={{fontSize: 14, fontWeight: 500, color: '#00558C'}} className='col-1'>{key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1').trim()}</td>
+                                            <td style={{ fontSize: 14, fontWeight: 500, color: '#00558C' }} className='col-1'>
+                                                {key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1').trim()}
+                                            </td>
                                             <td className='border-start col-4'>{value}</td>
                                         </tr>
                                     ))}
@@ -187,7 +163,7 @@ const PrescriptionForm = () => {
 
                 {drugs.map((drug, index) => (
                     <div className="form-group mb-3" key={index}>
-                        <hr className="mb-2" /> 
+                        <hr className="mb-2" />
                         <div className="d-flex justify-content-between mb-2">
                             <h5 className="mb-2">Drug {index + 1}</h5>
                             {drugs.length > 1 && (
@@ -230,6 +206,7 @@ const PrescriptionForm = () => {
                                                 onChange={(e) => handleDrugChange(index, e)}
                                                 required
                                                 autoComplete='off'
+                                                min={1}
                                                 tabIndex={4 + index * 6}
                                             />
                                             <select
@@ -242,9 +219,9 @@ const PrescriptionForm = () => {
                                                 autoComplete='off'
                                                 tabIndex={5 + index * 6}
                                             >
-                                                <option value="tablets">tablets</option>
-                                                <option value="capsules">capsules</option>
-                                                <option value="ml">ml</option>
+                                                <option value="tablet(s)">tablet(s)</option>
+                                                <option value="capsule(s)">capsule(s)</option>
+                                                <option value="mL">mL</option>
                                                 <option value="g">g</option>
                                                 <option value="mg">mg</option>
                                             </select>
@@ -261,6 +238,7 @@ const PrescriptionForm = () => {
                                             onChange={(e) => handleDrugChange(index, e)}
                                             required
                                             autoComplete='off'
+                                            min={1}
                                             tabIndex={6 + index * 6}
                                         />
                                     </div>
@@ -285,6 +263,7 @@ const PrescriptionForm = () => {
                         </div>
                     </div>
                 ))}
+
                 <div className="d-flex justify-content-between">
                     <button
                         type="button"
@@ -303,6 +282,7 @@ const PrescriptionForm = () => {
                         {loading ? 'Submitting...' : 'Submit Prescription'}
                     </button>
                 </div>
+
                 {error && <div className="alert alert-danger mt-3" role="alert">{error}</div>}
                 {success && <div className="alert alert-success mt-3" role="alert">{success}</div>}
             </form>
