@@ -8,9 +8,9 @@ This project consists of a decentralized application (DApp) with a frontend, bac
 
 1. **Docker**: Ensure Docker and Docker Compose are installed on your machine. You can download Docker from [here](https://www.docker.com/get-started).
 
-2. **Metamask**: Install the Metamask extension for your browser from [here](https://metamask.io/download.html).  **Note**: Metamask is supported on Google Chrome, Mozilla Firefox, Brave, and Microsoft Edge. Ensure you are using one of these browsers to interact with the DApp.
+2. **Metamask**: Install the Metamask extension for your browser from [here](https://metamask.io/download.html). **Note**: Metamask is supported on Google Chrome, Mozilla Firefox, Brave, and Microsoft Edge. Ensure you are using one of these browsers to interact with the DApp.
 
-4. **Ganache**: Install Ganache for local Ethereum blockchain development from [here](https://www.trufflesuite.com/ganache).
+3. **Ganache**: Install Ganache for local Ethereum blockchain development from [here](https://www.trufflesuite.com/ganache).
 
 ## Getting Started
 
@@ -81,16 +81,17 @@ You should see entries for `frontend`, `ipfs_node`, and `backend`.
 
 1. **Create a `.env` File**: In the `frontend` directory, create a file named `.env`.
 
-2. **Add Environment Variables**: Open the `.env` file and add the following lines:
+2. **Add Environment Variables**: Open the `.env` file and add the following lines with sample values:
 
    ```plaintext
-   REACT_APP_SECRET_KEY=
-   REACT_APP_API_BASE_URL=
+   REACT_APP_SECRET_KEY=your-secret-key
+   REACT_APP_API_BASE_URL=http://localhost:3001
    GENERATE_SOURCEMAP=false
    ```
 
-   - Replace `REACT_APP_SECRET_KEY` with your secret key (if needed).
-   - Replace `REACT_APP_API_BASE_URL` with the base URL of your backend API (e.g., `http://localhost:3001`).
+   - Replace `your-secret-key` with your actual secret key (if needed).
+   - `REACT_APP_API_BASE_URL` should be set to the base URL of your backend API (e.g., `http://localhost:3001`).
+   - `GENERATE_SOURCEMAP=false` disables source maps in the build output for production.
 
 3. **Save the File**: Save the `.env` file with the required configurations.
 
@@ -160,6 +161,8 @@ To configure IPFS with the required CORS settings:
 2. **Save the File**: Save the `truffle-config.js` file with the updated settings.
 
 ### 8. Configure Settings
+
+**Disclaimer**: The following configuration is intended for development and testing purposes only. The settings provided here are not secure for production use and should not be used in a live environment.
 
 After setting up all the services, you need to configure the application settings. You can do this through the `ConfigPage` in your application.
 
