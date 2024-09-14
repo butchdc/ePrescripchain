@@ -44,6 +44,7 @@ const PrescriptionForm = () => {
             if (role === 'Patient') {
                 setIsPatientRegistered(true);
                 setPatientAttributes(attributes);
+                console.log(patientAttributes);
             } else {
                 setIsPatientRegistered(false);
                 setPatientAttributes({});
@@ -89,7 +90,6 @@ const PrescriptionForm = () => {
             const { prescriptionContract } = await initContracts(web3);
 
             await prescriptionContract.methods.prescriptionCreation(prescriptionID.toString(), patientAddress, ipfsHash).send({ from: physicianAddress });
-
 
             await savePrescriptionToDB({
                 address: patientAddress,
@@ -147,14 +147,23 @@ const PrescriptionForm = () => {
                             <div className='smallfont'>Patient Information</div>
                             <table className="table table-sm table-striped">
                                 <tbody>
-                                    {Object.entries(patientAttributes).map(([key, value]) => (
-                                        <tr key={key}>
-                                            <td style={{ fontSize: 14, fontWeight: 500, color: '#00558C' }} className='col-1'>
-                                                {key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1').trim()}
-                                            </td>
-                                            <td className='border-start col-4'>{value}</td>
-                                        </tr>
-                                    ))}
+                                    <tr>
+                                        <th>Address</th>
+                                        <td className='border-start'>{patientAttributes.address}</td>
+                                        <td></td><td></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Name</th>
+                                        <td className='border-start'>{patientAttributes.name}</td>
+                                        <th className='border-start'>Date of Birth</th>
+                                        <td className='border-start text-center'>{patientAttributes.dateOfBirth}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Patient Address</th>
+                                        <td className='border-start'>{patientAttributes.patientAddress}</td>
+                                        <th className='border-start'>NHI Number</th>
+                                        <td className='border-start text-center'>{patientAttributes.nhiNumber}</td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>

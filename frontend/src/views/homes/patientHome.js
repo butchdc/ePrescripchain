@@ -16,19 +16,15 @@ const statusDescriptions = [
     "Cancelled"
 ];
 
-const PhysicianHome = () => {
+const PatientHome = () => {
     const [state, setState] = useState({
         prescriptions: [],
         loading: true,
         error: null,
         web3: null,
         currentUser: '',
-        contracts: null,
-        selectedPrescriptionID: null,
-        assignmentSuccess: false,
+        contracts: null
     });
-
-    const closeButtonRef = useRef(null);
 
     useEffect(() => {
         const initialize = async () => {
@@ -62,12 +58,12 @@ const PhysicianHome = () => {
 
             if (!web3 || !currentUser || !contracts) return;
 
-            setState(prevState => ({ ...prevState, loading: true, assignmentSuccess: false }));
+            setState(prevState => ({ ...prevState, loading: true}));
 
             try {
                 const response = await axios.get(`${apiBaseURL}prescriptions`, {
                     params: {
-                      createdBy: currentUser,
+                      address: currentUser,
                       status: 'In-Progress' 
                     }
                   });
@@ -80,14 +76,14 @@ const PhysicianHome = () => {
                 const prescriptionsData = await Promise.all(
                     response.data.map(async (prescription) => {
                         try {
-                            const patientAddress = prescription.address;
+                            const physicianAddress = prescription.createdBy;
 
-                            if (!web3.utils.isAddress(patientAddress)) {
-                                throw new Error(`Invalid patient address: ${patientAddress}`);
+                            if (!web3.utils.isAddress(physicianAddress)) {
+                                throw new Error(`Invalid physician address: ${physicianAddress}`);
                             }
 
-                            const patientIPFSHash = await contracts.registrationContract.methods.getPatientIPFSHash(patientAddress).call();
-                            const patientData = await downloadFromIPFS(patientIPFSHash);
+                            const physicianIPFSHash = await contracts.registrationContract.methods.getPhysicianIPFSHash(physicianAddress).call();
+                            const physicianData = await downloadFromIPFS(physicianIPFSHash);
 
                             const prescriptionData = await contracts.prescriptionContract.methods.accessPrescription(prescription.prescriptionID).call({ from: currentUser });
 
@@ -100,12 +96,13 @@ const PhysicianHome = () => {
 
                             return {
                                 id: prescription.prescriptionID,
-                                patientAddress: prescriptionData[0],
-                                patientName: patientData.name,
-                                patientNHI: patientData.nhiNumber,
+                                physicianName: physicianData.name,
+                                physicianNZMC: physicianData.nzmcNo,
+                                physicianContactNo: physicianData.contactNumber,
                                 date: prescription.date,
                                 pharmacyName: pharmacyData ? pharmacyData.pharmacyName : null,
                                 pharmacyAddress: pharmacyData ? pharmacyData.pharmacyAddress : null,
+                                pharmacyContactNo: pharmacyData ? pharmacyData.contactNumber : null,
                                 status: prescriptionData[2]
                             };
                         } catch (err) {
@@ -132,62 +129,32 @@ const PhysicianHome = () => {
         };
 
         fetchPrescriptions();
-    }, [state.web3, state.currentUser, state.contracts, state.assignmentSuccess]);
+    }, [state.web3, state.currentUser, state.contracts]);
 
     const formatDate = (timestamp) => new Date(timestamp).toISOString().split('T')[0];
 
-    const handleAssign = (prescriptionID) => setState(prevState => ({ ...prevState, selectedPrescriptionID: prescriptionID }));
-
-    const handleCancel = async (prescriptionID) => {
-        const { contracts, currentUser } = state;
-        try {
-            await contracts.prescriptionContract.methods.cancelPrescription(prescriptionID).send({ from: currentUser });
-
-            await updateStatusToDB(prescriptionID, 'Cancelled')
-          
-
-            setState(prevState => ({
-                ...prevState,
-                prescriptions: prevState.prescriptions.filter(prescription => prescription.id !== prescriptionID),
-            }));
-
-            alert('Prescription has been cancelled.');
-        } catch (err) {
-            console.error('Failed to cancel prescription:', err);
-            alert('Failed to cancel prescription.');
-        }
-    };
-
-    const handleAssignmentSuccess = () => {
-        setState(prevState => ({ ...prevState, assignmentSuccess: true }));
-        if (closeButtonRef.current) {
-            closeButtonRef.current.click();
-        }
-    };
-
-    const { prescriptions, loading, error, selectedPrescriptionID } = state;
+    const { prescriptions, loading, error } = state;
 
     return (
-        <div className="container bgcolor2 p-3">
-            <h4 className='mb-3'>Physician Dashboard</h4>
+        <div className="container p-2 bgcolor2">
+            <h4>Patient Dashboard</h4>
             {loading && <p>Loading...</p>}
             {error && <p className="text-danger">Error: {error}</p>}
             {!loading && !error && (
                 <div>
-                    <h6 className=''>MY ACTIVE PRESCRIPTIONS</h6>
                     <table className="table table-bordered table-striped">
                         <thead>
                             <tr>
-                                <th className='col-2 text-center'>Date / Prescription ID</th>                            
-                                <th>Patient</th>
+                                <th className='col-2 text-center'>Date / Prescription ID</th>
+                                <th className='text-center'>From Physician</th>
+                                <th className='text-center'>Assigned Pharmacy</th>
                                 <th className='col-2 text-center'>Status</th>
-                                <th className='text-center'>Pharmacy</th>
-                                <th className='col-2 text-center'>Action</th>
+                                <th className='col-2 text-center'>Action</th>    
                             </tr>
                         </thead>
                         <tbody>
                             {prescriptions.length > 0 ? (
-                                prescriptions.map((prescription, index) => (
+                                prescriptions.map((prescription,index)=>(
                                     <tr key={index}>
                                         <td className='text-center'>
                                             <div>Date: {formatDate(prescription.date)}</div>
@@ -195,31 +162,23 @@ const PhysicianHome = () => {
                                         </td>
                                         <td>
                                             <div className="vstack">
-                                                <div className='m-0 p-0'>{prescription.patientName}</div>
-                                                <div>{prescription.patientNHI}</div>
-                                                <div style={{ fontSize: 10 }}>{prescription.patientAddress}</div>
+                                                <div className='m-0 p-0'>{prescription.physicianName}</div>
+                                                <div>{prescription.physicianNZMC}</div>
+                                                <div style={{fontSize:14}}>Phone: {prescription.physicianContactNo}</div>
                                             </div>
                                         </td>
-                                        <td className='text-center' style={{ fontSize: 14 }}>
-                                            {statusDescriptions[prescription.status]}
-                                        </td>
-                                        <td className='text-center'>
+                                        <td>
                                             {!prescription.pharmacyName ? (
-                                                <button 
-                                                    className="btn btn-sm btn-warning"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#assignPharmacyModal"
-                                                    onClick={() => handleAssign(prescription.id)}
-                                                >
-                                                    Assign Pharmacy
-                                                </button>
-                                            ) : (
+                                                <div className="">No Pharmacy Assigned</div>
+                                            ):(
                                                 <div className="vstack">
                                                     <div className='m-0 p-0'>{prescription.pharmacyName}</div>
-                                                    <div style={{ fontSize: 10 }}>{prescription.pharmacyAddress}</div>
+                                                    <div style={{ fontSize: 12 }}>{prescription.pharmacyAddress}</div>
+                                                    <div style={{ fontSize: 14 }}>Phone: {prescription.pharmacyContactNo}</div>
                                                 </div>
                                             )}
                                         </td>
+                                        <td>{statusDescriptions[prescription.status]}</td>
                                         <td className='text-center'>
                                             <Link className="btn btn-sm btn-info"
                                                 to={`/access-prescription/${prescription.id}`}
@@ -229,55 +188,20 @@ const PhysicianHome = () => {
                                                 <path d="M2 1a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1v10.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 3 14.5V4a1 1 0 0 1-1-1zm2 3v10.5a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5V4zM3 3h10V1H3z"/>
                                                 </svg>
                                             </Link>
-                                            {(prescription.status === 0n || prescription.status === 1n) && (
-                                                <button 
-                                                    className="btn btn-sm btn-danger ms-2"
-                                                    onClick={() => handleCancel(prescription.id)}
-                                                >
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" className="bi bi-x-circle-fill" viewBox="0 0 16 16">
-                                                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293z"/>
-                                                    </svg>
-                                                </button>
-                                            )}
                                         </td>
                                     </tr>
                                 ))
-                            ) : (
+                            ):(
                                 <tr>
                                     <td colSpan="6" className="text-center">No prescriptions found</td>
                                 </tr>
                             )}
                         </tbody>
                     </table>
-
-                    {/* Modal for assigning pharmacy */}
-                    <div className="modal fade" id="assignPharmacyModal" tabIndex="-1" aria-labelledby="assignPharmacyModalLabel" aria-hidden="true">
-                        <div className="modal-dialog modal-lg">
-                            <div className="modal-content">
-                                <div className="modal-header bgcolor3">
-                                    <h5 className="modal-title" id="assignPharmacyModalLabel">Assign Pharmacy</h5>
-                                    <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div className="modal-body p-2">
-                                    <PharmacySelection prescriptionID={selectedPrescriptionID} onAssignmentSuccess={handleAssignmentSuccess} />
-                                </div>
-                                <div className="modal-footer">
-                                    <button 
-                                        type="button" 
-                                        className="btn btn-secondary" 
-                                        data-bs-dismiss="modal"
-                                        ref={closeButtonRef}
-                                    >
-                                        Close
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             )}
         </div>
     );
-};
-
-export default PhysicianHome;
+}
+ 
+export default PatientHome;

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { initWeb3, initContracts } from '../../utils/web3utils';
 import { downloadFromIPFS, updateStatusToDB } from '../../utils/apiutils';
-import PreviewPrescription from '../previewprescription';
+import { Link } from 'react-router-dom';
 
 const apiBaseURL = process.env.REACT_APP_API_BASE_URL;
 
@@ -132,10 +132,6 @@ const PharmacyHome = () => {
 
     const formatDate = (timestamp) => new Date(timestamp).toISOString().split('T')[0];
 
-    const handleBack = () => setState(prevState => ({ ...prevState, selectedPrescriptionID: null }));
-
-    const handleView = (prescriptionID) => setState(prevState => ({ ...prevState, selectedPrescriptionID: prescriptionID }));
-
     const handleAction = async (prescriptionID,action) => {
         try {
             await state.contracts.prescriptionContract.methods[action](prescriptionID).send({ from: state.currentUser });
@@ -152,10 +148,6 @@ const PharmacyHome = () => {
     };
 
     const { prescriptions, loading, error, selectedPrescriptionID } = state;
-
-    if (selectedPrescriptionID) {
-        return <PreviewPrescription prescriptionID={selectedPrescriptionID} onBack={handleBack} />;
-    }
 
 
     return (
@@ -203,15 +195,14 @@ const PharmacyHome = () => {
                                             {statusDescriptions[prescription.status]}
                                         </td>
                                         <td className="text-center">
-                                            <button 
-                                                className="btn btn-sm btn-primary m-1"
-                                                onClick={() => handleView(prescription.id)}
+                                            <Link className="btn btn-sm btn-info"
+                                                to={`/access-prescription/${prescription.id}`}
                                             >
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" className="bi bi-printer-fill" viewBox="0 0 16 16">
-                                                <path d="M5 1a2 2 0 0 0-2 2v1h10V3a2 2 0 0 0-2-2zm6 8H5a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-3a1 1 0 0 0-1-1"/>
-                                                <path d="M0 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1v-2a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v2H2a2 2 0 0 1-2-2zm2.5 1a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1"/>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-prescription" viewBox="0 0 16 16">
+                                                <path d="M5.5 6a.5.5 0 0 0-.5.5v4a.5.5 0 0 0 1 0V9h.293l2 2-1.147 1.146a.5.5 0 0 0 .708.708L9 11.707l1.146 1.147a.5.5 0 0 0 .708-.708L9.707 11l1.147-1.146a.5.5 0 0 0-.708-.708L9 10.293 7.695 8.987A1.5 1.5 0 0 0 7.5 6zM6 7h1.5a.5.5 0 0 1 0 1H6z"/>
+                                                <path d="M2 1a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1v10.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 3 14.5V4a1 1 0 0 1-1-1zm2 3v10.5a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5V4zM3 3h10V1H3z"/>
                                                 </svg>
-                                            </button>
+                                            </Link>
                                             {prescription.status === 1n &&
                                                 <>
                                                     <button className="btn btn-sm btn-success m-1" 
@@ -221,11 +212,11 @@ const PharmacyHome = () => {
                                                         <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
                                                         </svg>
                                                     </button>
-                                                    <button className="btn btn-sm btn-danger m-1" 
+                                                    <button className="btn btn-sm btn-warning m-1" 
                                                         onClick={()=>handleAction(prescription.id,'rejectPrescription')}
                                                     >
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" className="bi bi-x-circle-fill" viewBox="0 0 16 16">
-                                                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293z"/>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-reply-fill" viewBox="0 0 16 16">
+                                                        <path d="M5.921 11.9 1.353 8.62a.72.72 0 0 1 0-1.238L5.921 4.1A.716.716 0 0 1 7 4.719V6c1.5 0 6 0 7 8-2.5-4.5-7-4-7-4v1.281c0 .56-.606.898-1.079.62z"/>
                                                         </svg>
                                                     </button>
                                                 </>

@@ -141,6 +141,16 @@ const Navbar = () => {
                             </li>
                         </>
                     )}
+                    {role === 'Patient' && (
+                        <>
+                            <li className="nav-item">
+                                <Link className="nav-link" to="/">Home</Link>
+                            </li>
+                            <li className="nav-item">
+                                <Link className="nav-link" to="/access-prescription">Access Prescription</Link>
+                            </li>
+                        </>
+                    )}
                     <li className="nav-item">
                         <Link className="nav-link" to="/info">About</Link>
                     </li>

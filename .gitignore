@@ -6,3 +6,4 @@
 /backend/db
 /frontend/.env
 /ipfs/data
+.DS_Store
