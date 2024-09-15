@@ -144,13 +144,20 @@ router.post('/status-timestamps', (req, res) => {
   });
 });
 
-// Route to get status timestamps for a prescription
+// Route to get status timestamps for a prescription with optional sorting
 router.get('/status-timestamps/:prescriptionID', (req, res) => {
   const { prescriptionID } = req.params;
+  const { sortColumn, sortOrder } = req.query;
 
   console.log(`[${getCurrentTimestamp()}] GET request received for status-timestamps of prescriptionID: ${prescriptionID}`);
 
-  const query = `SELECT * FROM status_timestamps WHERE prescriptionID = ?`;
+  // Default sorting by timestamp if not provided
+  const sort = {
+    column: sortColumn || 'timestamp',
+    order: ['ASC', 'DESC'].includes(sortOrder?.toUpperCase()) ? sortOrder.toUpperCase() : 'ASC'
+  };
+
+  const query = `SELECT * FROM status_timestamps WHERE prescriptionID = ? ORDER BY ${sort.column} ${sort.order}`;
 
   db.all(query, [prescriptionID], (err, rows) => {
     if (err) {

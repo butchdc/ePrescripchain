@@ -196,32 +196,62 @@ export const updateStatusToDB = async (prescriptionID, newStatus) => {
 };
 
 
-export const saveStatusTimestampToDB = async (prescriptionID, status, timestamp, notes = '') => {
+// export const saveStatusTimestampToDB = async (prescriptionID, status, timestamp, notes = '') => {
+//     const statusDescriptions = [
+//         {
+//             status: "Awaiting Pharmacy Assignment",
+//             note: "Your prescription has been created and is waiting to be assigned to a pharmacy."
+//         },
+//         {
+//             status: "Awaiting For Confirmation",
+//             note: "Your prescription has been assigned to a pharmacy and is awaiting confirmation."
+//         },
+//         {
+//             status: "Preparing",
+//             note: "Your prescription has been confirmed by the pharmacy and is now being prepared."
+//         },
+//         {
+//             status: "Ready For Collection",
+//             note: "Your prescription is ready for collection. You can pick it up from the pharmacy."
+//         },
+//         {
+//             status: "Collected",
+//             note: "Your prescription has been collected. Contact the pharmacy if you need further assistance."
+//         },
+//         {
+//             status: "Cancelled",
+//             note: "Your prescription has been cancelled by the physician. If you have questions, please contact the physician’s office."
+//         }
+//     ];
+
+//     const getStatusNote = (status) => {
+//         const statusDescription = statusDescriptions.find(desc => desc.status === status);
+//         return statusDescription ? statusDescription.note : '';
+//     };
+
+//     try {
+//         const finalNotes = notes || getStatusNote(status);
+//         const response = await axios.post(`${apiBaseURL}prescriptions/status-timestamps`, {
+//             prescriptionID,
+//             status,
+//             timestamp,
+//             notes: finalNotes
+//         });
+//         return response.data;
+//     } catch (error) {
+//         console.error('Error saving status timestamp to database:', error.message);
+//         throw new Error('Failed to save status timestamp to the database');
+//     }
+// };
+
+export const saveStatusTimestampToDB = async (prescriptionID, status, timestamp) => {
     const statusDescriptions = [
-        {
-            status: "Awaiting Pharmacy Assignment",
-            note: "Your prescription has been created and is waiting to be assigned to a pharmacy."
-        },
-        {
-            status: "Awaiting For Confirmation",
-            note: "Your prescription has been assigned to a pharmacy and is awaiting confirmation."
-        },
-        {
-            status: "Preparing",
-            note: "Your prescription has been confirmed by the pharmacy and is now being prepared."
-        },
-        {
-            status: "Ready For Collection",
-            note: "Your prescription is ready for collection. You can pick it up from the pharmacy."
-        },
-        {
-            status: "Collected",
-            note: "Your prescription has been collected. Contact the pharmacy if you need further assistance."
-        },
-        {
-            status: "Cancelled",
-            note: "Your prescription has been cancelled by the physician. If you have questions, please contact the physician’s office."
-        }
+        { status: "Awaiting Pharmacy Assignment", note: "Your prescription has been created and is waiting to be assigned to a pharmacy." },
+        { status: "Awaiting For Confirmation", note: "Your prescription has been assigned to a pharmacy and is awaiting confirmation." },
+        { status: "Preparing", note: "Your prescription has been confirmed by the pharmacy and is now being prepared." },
+        { status: "Ready For Collection", note: "Your prescription is ready for collection. You can pick it up from the pharmacy." },
+        { status: "Collected", note: "Your prescription has been collected. Contact the pharmacy if you need further assistance." },
+        { status: "Cancelled", note: "Your prescription has been cancelled by the physician. If you have questions, please contact the physician’s office." }
     ];
 
     const getStatusNote = (status) => {
@@ -230,13 +260,19 @@ export const saveStatusTimestampToDB = async (prescriptionID, status, timestamp,
     };
 
     try {
-        const finalNotes = notes || getStatusNote(status);
+        // Prompt user for additional notes
+        const userNotes = prompt("Enter additional notes (optional):", "");
+        // Use user input or default note
+        const finalNotes = userNotes !== null ? userNotes !== '' ? userNotes : getStatusNote(status):'';
+
         const response = await axios.post(`${apiBaseURL}prescriptions/status-timestamps`, {
             prescriptionID,
             status,
             timestamp,
             notes: finalNotes
         });
+
+        console.log('Response:', response.data);
         return response.data;
     } catch (error) {
         console.error('Error saving status timestamp to database:', error.message);
