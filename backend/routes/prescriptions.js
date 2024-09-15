@@ -120,4 +120,48 @@ router.delete('/:prescriptionID', (req, res) => {
   });
 });
 
+// Route to add a status timestamp
+router.post('/status-timestamps', (req, res) => {
+  const { prescriptionID, status, timestamp, notes } = req.body;
+
+  console.log(`[${getCurrentTimestamp()}] POST request received for status-timestamps with body:`, req.body);
+
+  if (!prescriptionID || !status || !timestamp) {
+    return res.status(400).json({ error: 'PrescriptionID, status, and timestamp are required.' });
+  }
+
+  const query = `
+    INSERT INTO status_timestamps (prescriptionID, status, timestamp, notes)
+    VALUES (?, ?, ?, ?)
+  `;
+
+  db.run(query, [prescriptionID, status, timestamp, notes || null], function (err) {
+    if (err) {
+      console.error(`[${getCurrentTimestamp()}] Error inserting status timestamp:`, err.message);
+      return res.status(500).json({ error: 'An error occurred while processing the request.' });
+    }
+    res.status(200).json({ message: 'Status timestamp added successfully.' });
+  });
+});
+
+// Route to get status timestamps for a prescription
+router.get('/status-timestamps/:prescriptionID', (req, res) => {
+  const { prescriptionID } = req.params;
+
+  console.log(`[${getCurrentTimestamp()}] GET request received for status-timestamps of prescriptionID: ${prescriptionID}`);
+
+  const query = `SELECT * FROM status_timestamps WHERE prescriptionID = ?`;
+
+  db.all(query, [prescriptionID], (err, rows) => {
+    if (err) {
+      console.error(`[${getCurrentTimestamp()}] Error fetching status timestamps:`, err.message);
+      return res.status(500).json({ error: 'An error occurred while fetching status timestamps.' });
+    }
+    if (rows.length === 0) {
+      return res.json({ message: 'No status timestamps found for this prescription.' });
+    }
+    res.json(rows);
+  });
+});
+
 module.exports = router;

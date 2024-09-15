@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { initWeb3, initContracts } from '../../utils/web3utils'; 
-import { downloadFromIPFS } from '../../utils/apiutils'; 
+import { downloadFromIPFS, saveStatusTimestampToDB } from '../../utils/apiutils'; 
 
 const apiBaseURL = process.env.REACT_APP_API_BASE_URL;
 
@@ -102,6 +102,9 @@ function PharmacySelection({ prescriptionID, onAssignmentSuccess }) {
         
             // Update the prescription with the assigned pharmacy
             await axios.post(`${apiBaseURL}prescriptions`, { ...prescription, assignedTo: selectedPharmacy.address });
+
+            await saveStatusTimestampToDB(prescriptionID, 'Awaiting For Confirmation', Date.now());
+
 
             onAssignmentSuccess();
         } catch (err) {

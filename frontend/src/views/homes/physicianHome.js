@@ -138,25 +138,25 @@ const PhysicianHome = () => {
 
     const handleAssign = (prescriptionID) => setState(prevState => ({ ...prevState, selectedPrescriptionID: prescriptionID }));
 
-    const handleCancel = async (prescriptionID) => {
-        const { contracts, currentUser } = state;
-        try {
-            await contracts.prescriptionContract.methods.cancelPrescription(prescriptionID).send({ from: currentUser });
+    // const handleCancel = async (prescriptionID) => {
+    //     const { contracts, currentUser } = state;
+    //     try {
+    //         await contracts.prescriptionContract.methods.cancelPrescription(prescriptionID).send({ from: currentUser });
 
-            await updateStatusToDB(prescriptionID, 'Cancelled')
+    //         await updateStatusToDB(prescriptionID, 'Cancelled')
           
 
-            setState(prevState => ({
-                ...prevState,
-                prescriptions: prevState.prescriptions.filter(prescription => prescription.id !== prescriptionID),
-            }));
+    //         setState(prevState => ({
+    //             ...prevState,
+    //             prescriptions: prevState.prescriptions.filter(prescription => prescription.id !== prescriptionID),
+    //         }));
 
-            alert('Prescription has been cancelled.');
-        } catch (err) {
-            console.error('Failed to cancel prescription:', err);
-            alert('Failed to cancel prescription.');
-        }
-    };
+    //         alert('Prescription has been cancelled.');
+    //     } catch (err) {
+    //         console.error('Failed to cancel prescription:', err);
+    //         alert('Failed to cancel prescription.');
+    //     }
+    // };
 
     const handleAssignmentSuccess = () => {
         setState(prevState => ({ ...prevState, assignmentSuccess: true }));
@@ -229,7 +229,7 @@ const PhysicianHome = () => {
                                                 <path d="M2 1a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1v10.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 3 14.5V4a1 1 0 0 1-1-1zm2 3v10.5a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5V4zM3 3h10V1H3z"/>
                                                 </svg>
                                             </Link>
-                                            {(prescription.status === 0n || prescription.status === 1n) && (
+                                            {/* {(prescription.status === 0n || prescription.status === 1n) && (
                                                 <button 
                                                     className="btn btn-sm btn-danger ms-2"
                                                     onClick={() => handleCancel(prescription.id)}
@@ -238,7 +238,7 @@ const PhysicianHome = () => {
                                                     <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293z"/>
                                                     </svg>
                                                 </button>
-                                            )}
+                                            )} */}
                                         </td>
                                     </tr>
                                 ))

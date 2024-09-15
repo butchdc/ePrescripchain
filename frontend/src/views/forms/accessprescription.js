@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { initWeb3, initContracts } from '../../utils/web3utils';
-import { downloadFromIPFS, updateStatusToDB } from '../../utils/apiutils';
+import { downloadFromIPFS, updateStatusToDB, saveStatusTimestampToDB } from '../../utils/apiutils';
 import PreviewPrescription from '../previewprescription';
 import PharmacySelection from './pharmacyselection';
 import { getUserRoleAndAttributes } from '../../utils/userqueryutils';
@@ -14,6 +14,19 @@ const statusDescriptions = [
     "Collected",
     "Cancelled"
 ];
+
+// status: "Awaiting Pharmacy Assignment",
+// note: "Your prescription has been created and is waiting to be assigned to a pharmacy."
+// status: "Awaiting For Confirmation",
+// note: "Your prescription has been assigned to a pharmacy and is awaiting confirmation."
+// status: "Preparing",
+// note: "Your prescription has been confirmed by the pharmacy and is now being prepared."
+// status: "Ready For Collection",
+// note: "Your prescription is ready for collection. You can pick it up from the pharmacy."
+// status: "Collected",
+// note: "Your prescription has been collected. Contact the pharmacy if you need further assistance."
+// status: "Cancelled",
+// note: "Your prescription has been cancelled by the physician. If you have questions, please contact the physician’s office."
 
 const AccessPrescription = () => {
     const [prescriptionID, setPrescriptionID] = useState('');
@@ -103,14 +116,24 @@ const AccessPrescription = () => {
 
     const handleAction = useCallback(async (action) => {
         try {
-            await contracts.prescriptionContract.methods[action](prescriptionID).send({ from: currentUser });
+            await contracts.prescriptionContract.methods[action](prescriptionID).send({ from: currentUser });        
+
+            if (action=='acceptPrescription') {
+                await saveStatusTimestampToDB(prescriptionID, 'Preparing', Date.now());
+            }
+
+            if (action=='medicationPreparation') {
+                await saveStatusTimestampToDB(prescriptionID, 'Ready For Collection', Date.now());
+            }
 
             if (action=='medicationCollection') {
                 await updateStatusToDB(prescriptionID,'Collected');
+                await saveStatusTimestampToDB(prescriptionID, 'Collected', Date.now());
             }
 
             if (action=='cancelPrescription') {
                 await updateStatusToDB(prescriptionID,'Cancelled');
+                await saveStatusTimestampToDB(prescriptionID, 'Cancelled', Date.now());
             }
 
             fetchPrescriptionDetails();
@@ -154,7 +177,11 @@ const AccessPrescription = () => {
                     onClick={fetchPrescriptionDetails}
                     disabled={loading}
                 >
-                    {loading ? 'Loading...' : 'Search'}
+                    {loading ? 'Searching...' : 
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-search" viewBox="0 0 16 16">
+                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+                        </svg>
+                    }
                 </button>
             </div>
 
@@ -174,7 +201,7 @@ const AccessPrescription = () => {
                             <div>{prescriptionDetails.rxDate}</div>
                         </div>
                         <div className='col-auto hstack gap-2'>
-                            {(role === 'Physician' || role === 'Pharmacy') &&
+                            {(role === 'Physician' || role === 'Pharmacy' || role) &&
                                 <button className='btn btn-sm btn-primary' onClick={handlePrint}>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" className="bi bi-printer-fill" viewBox="0 0 16 16">
                                     <path d="M5 1a2 2 0 0 0-2 2v1h10V3a2 2 0 0 0-2-2zm6 8H5a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-3a1 1 0 0 0-1-1"/>
@@ -197,7 +224,7 @@ const AccessPrescription = () => {
                                         </svg>
                                     </button>
                                     <button className="btn btn-sm btn-warning" onClick={() => handleAction('rejectPrescription')}>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-reply-fill" viewBox="0 0 16 16">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" className="bi bi-reply-fill" viewBox="0 0 16 16">
                                         <path d="M5.921 11.9 1.353 8.62a.72.72 0 0 1 0-1.238L5.921 4.1A.716.716 0 0 1 7 4.719V6c1.5 0 6 0 7 8-2.5-4.5-7-4-7-4v1.281c0 .56-.606.898-1.079.62z"/>
                                         </svg>
                                     </button>

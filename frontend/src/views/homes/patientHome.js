@@ -161,24 +161,24 @@ const PatientHome = () => {
                                             <div style={{ fontSize: 12 }}>{prescription.id}</div>
                                         </td>
                                         <td>
-                                            <div className="vstack">
-                                                <div className='m-0 p-0'>{prescription.physicianName}</div>
+                                            <div className="vstack ps-3">
+                                                <div className=''>{prescription.physicianName}</div>
                                                 <div>{prescription.physicianNZMC}</div>
                                                 <div style={{fontSize:14}}>Phone: {prescription.physicianContactNo}</div>
                                             </div>
                                         </td>
                                         <td>
                                             {!prescription.pharmacyName ? (
-                                                <div className="">No Pharmacy Assigned</div>
+                                                <div className="text-center">No Pharmacy Assigned</div>
                                             ):(
-                                                <div className="vstack">
+                                                <div className="vstack ps-3">
                                                     <div className='m-0 p-0'>{prescription.pharmacyName}</div>
                                                     <div style={{ fontSize: 12 }}>{prescription.pharmacyAddress}</div>
                                                     <div style={{ fontSize: 14 }}>Phone: {prescription.pharmacyContactNo}</div>
                                                 </div>
                                             )}
                                         </td>
-                                        <td>{statusDescriptions[prescription.status]}</td>
+                                        <td className='text-center'>{statusDescriptions[prescription.status]}</td>
                                         <td className='text-center'>
                                             <Link className="btn btn-sm btn-info"
                                                 to={`/access-prescription/${prescription.id}`}

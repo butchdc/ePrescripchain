@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { initWeb3, initContracts } from '../../utils/web3utils';
 import { getUserRoleAndAttributes } from '../../utils/userqueryutils';
-import { uploadToIPFS, savePrescriptionToDB } from '../../utils/apiutils';
+import { uploadToIPFS, savePrescriptionToDB, saveStatusTimestampToDB } from '../../utils/apiutils';
 import { v4 as uuidv4 } from 'uuid';
 
 const PrescriptionForm = () => {
@@ -91,14 +91,18 @@ const PrescriptionForm = () => {
 
             await prescriptionContract.methods.prescriptionCreation(prescriptionID.toString(), patientAddress, ipfsHash).send({ from: physicianAddress });
 
+            const newDate = Date.now();
+            
             await savePrescriptionToDB({
                 address: patientAddress,
                 ipfsHash,
                 createdBy: physicianAddress,
-                date: Date.now(),
+                date: newDate,
                 prescriptionID,
                 status: 'In-Progress'
             });
+
+            await saveStatusTimestampToDB(prescriptionID, 'Awaiting Pharmacy Assignment', newDate, 'Your prescription has been created and is waiting to be assigned to a pharmacy.');
 
             setPatientAddress('');
             setDrugs([{ name: '', sig: '', mitte: '', mitteUnit: 'tablet(s)', repeat: '' }]);

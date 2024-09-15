@@ -23,7 +23,7 @@ const PharmacyHome = () => {
         web3: null,
         currentUser: '',
         contracts: null,
-        selectedPrescriptionID: null,
+        // selectedPrescriptionID: null,
         refresh: false
     });
 
@@ -132,20 +132,20 @@ const PharmacyHome = () => {
 
     const formatDate = (timestamp) => new Date(timestamp).toISOString().split('T')[0];
 
-    const handleAction = async (prescriptionID,action) => {
-        try {
-            await state.contracts.prescriptionContract.methods[action](prescriptionID).send({ from: state.currentUser });
+    // const handleAction = async (prescriptionID,action) => {
+    //     try {
+    //         await state.contracts.prescriptionContract.methods[action](prescriptionID).send({ from: state.currentUser });
 
-            if (action=='medicationCollection') {
-                await updateStatusToDB(prescriptionID,'Collected');
-            }
+    //         if (action=='medicationCollection') {
+    //             await updateStatusToDB(prescriptionID,'Collected');
+    //         }
 
-            setState(prevState=> ({...prevState, refresh: !state.refresh}));
-        } catch (err) {
-            console.error(`Error performing action: ${err.message}`);
-            alert(`Error performing action: ${err.message}`);
-        }
-    };
+    //         setState(prevState=> ({...prevState, refresh: !state.refresh}));
+    //     } catch (err) {
+    //         console.error(`Error performing action: ${err.message}`);
+    //         alert(`Error performing action: ${err.message}`);
+    //     }
+    // };
 
     const { prescriptions, loading, error, selectedPrescriptionID } = state;
 
@@ -203,7 +203,7 @@ const PharmacyHome = () => {
                                                 <path d="M2 1a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1v10.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 3 14.5V4a1 1 0 0 1-1-1zm2 3v10.5a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5V4zM3 3h10V1H3z"/>
                                                 </svg>
                                             </Link>
-                                            {prescription.status === 1n &&
+                                            {/* {prescription.status === 1n &&
                                                 <>
                                                     <button className="btn btn-sm btn-success m-1" 
                                                         onClick={()=>handleAction(prescription.id,'acceptPrescription')}
@@ -242,7 +242,7 @@ const PharmacyHome = () => {
                                                         </svg>
                                                     </button>
                                                 </>
-                                            }
+                                            } */}
                                         </td>
                                     </tr>
                                 ))

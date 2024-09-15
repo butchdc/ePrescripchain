@@ -14,4 +14,18 @@ db.serialize(() => {
         status TEXT
     )
   `);
+
+  // Create the status_timestamps table if it does not already exist
+  db.run(`
+    CREATE TABLE IF NOT EXISTS status_timestamps (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        prescriptionID TEXT NOT NULL,
+        status TEXT NOT NULL,
+        timestamp INTEGER NOT NULL,
+        notes TEXT,
+        FOREIGN KEY(prescriptionID) REFERENCES prescriptions(prescriptionID)
+    )
+  `);
 });
+
+db.close();
