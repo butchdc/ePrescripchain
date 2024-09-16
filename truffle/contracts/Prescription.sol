@@ -23,22 +23,22 @@ contract Prescription {
     mapping(string => address) public prescriptionToPharmacy;
 
     // Enums
-    enum PrescriptionStatus { AwaitingPharmacyAssignment, AwaitingForConfirmation, Preparing, ReadyForCollection, Collected, Cancelled }
+    enum PrescriptionStatus { AwaitingPharmacyAssignment, AwaitingForConfirmation, Preparing, ReadyForCollection, Collected, Cancelled, Reassigned }
 
     // Events
     event PharmacySelected(address indexed _pharmacy);
     event PrescriptionCreated(
-        string indexed prescriptionID, 
+        string prescriptionID, 
         address indexed physician,
         address indexed patient,
         string IPFShash
     );
-    event PrescriptionAccepted(string indexed prescriptionID, address _pharmacy); 
-    event PrescriptionRejected(string indexed prescriptionID, address _pharmacy); 
-    event MedicationIsPrepared(string indexed prescriptionID, address _pharmacy, address patient); 
-    event MedicationIsCollected(string indexed prescriptionID, address patient); 
-    event PrescriptionCancelled(string indexed prescriptionID, address patient); 
-    event PrescriptionStatusUpdated(string indexed prescriptionID, PrescriptionStatus newStatus); 
+    event PrescriptionAccepted(string prescriptionID, address _pharmacy); 
+    event PrescriptionRejected(string prescriptionID, address _pharmacy); 
+    event MedicationIsPrepared(string prescriptionID, address _pharmacy, address patient); 
+    event MedicationIsCollected(string prescriptionID, address patient); 
+    event PrescriptionCancelled(string prescriptionID, address patient); 
+    event PrescriptionStatusUpdated(string prescriptionID, PrescriptionStatus newStatus); 
 
     // Modifiers
     modifier onlyPhysician() {
@@ -63,7 +63,8 @@ contract Prescription {
         require(
             msg.sender == detail.physician || 
             msg.sender == detail.patient || 
-            isPharmacy,
+            isPharmacy ||
+            reg_contract.regulatoryAuthority(msg.sender),
             "Unauthorized access"
         );
         _;
@@ -118,12 +119,28 @@ contract Prescription {
 
         PrescriptionDetail storage detail = prescriptions[_prescriptionID];
         require(detail.patient != address(0), "Prescription does not exist");
-        require(detail.status == PrescriptionStatus.AwaitingPharmacyAssignment, "Prescription is not in a state that allows pharmacy selection");
 
-        require(msg.sender == detail.patient || msg.sender == detail.physician, "Only the patient or the prescribing physician can select a pharmacy");
+        // Check if the prescription is already assigned to a pharmacy
+        address currentPharmacy = prescriptionToPharmacy[_prescriptionID];
+        
+        if (currentPharmacy != address(0)) {
+            // If there is a current pharmacy, and it has not accepted the prescription
+            bool wasAccepted = detail.status == PrescriptionStatus.Preparing || 
+                            detail.status == PrescriptionStatus.ReadyForCollection ||
+                            detail.status == PrescriptionStatus.Collected || 
+                            detail.status == PrescriptionStatus.Cancelled;
 
+            if (!wasAccepted) {
+                // Remove the old pharmacy's selection
+                hasPharmacySelected[_prescriptionID][currentPharmacy] = false;
+                emit PharmacySelected(currentPharmacy); // Optionally emit event for the old pharmacy removal
+            }
+        }
+
+        // Check if the new pharmacy was already selected
         require(!hasPharmacySelected[_prescriptionID][_pharmacyAddress], "This pharmacy has already been selected for this prescription");
 
+        // Set the new pharmacy and update the prescription status
         hasPharmacySelected[_prescriptionID][_pharmacyAddress] = true;
         prescriptionToPharmacy[_prescriptionID] = _pharmacyAddress;
 
@@ -132,6 +149,7 @@ contract Prescription {
         emit PharmacySelected(_pharmacyAddress);
         emit PrescriptionStatusUpdated(_prescriptionID, detail.status);
     }
+
 
     function acceptPrescription(string memory _prescriptionID) public onlyRegisteredPharmacies {
         PrescriptionDetail storage detail = prescriptions[_prescriptionID];
@@ -151,7 +169,7 @@ contract Prescription {
         require(detail.status == PrescriptionStatus.AwaitingForConfirmation, "Prescription is not in AwaitingForConfirmation status");
         require(msg.sender == prescriptionToPharmacy[_prescriptionID], "Only the assigned pharmacy can reject this prescription");
 
-        detail.status = PrescriptionStatus.AwaitingPharmacyAssignment;
+        detail.status = PrescriptionStatus.Reassigned;
         delete prescriptionToPharmacy[_prescriptionID];
         hasPharmacySelected[_prescriptionID][msg.sender] = false;
 
@@ -179,7 +197,7 @@ contract Prescription {
 
         detail.status = PrescriptionStatus.Collected;
 
-        emit MedicationIsCollected(_prescriptionID, msg.sender);
+        emit MedicationIsCollected(_prescriptionID, detail.patient);
         emit PrescriptionStatusUpdated(_prescriptionID, detail.status);
     }
 

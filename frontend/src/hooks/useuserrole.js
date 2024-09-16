@@ -11,6 +11,8 @@ const useUserRole = () => {
         setLoading(true);
         setError(null);
 
+        let isMounted = true; // flag to check if component is mounted
+
         try {
             if (!window.ethereum) {
                 throw new Error('MetaMask is not installed');
@@ -30,27 +32,37 @@ const useUserRole = () => {
             const isPharmacy = await registrationContract.methods.Pharmacy(userAddress).call();
             const isRegulatoryAuthority = await registrationContract.methods.regulatoryAuthority(userAddress).call();
 
-            if (isAdministrator) {
-                setRole('Administrator');
-            } else if (isRegulatoryAuthority) {
-                setRole('Regulatory Authority');
-            } else if (isPhysician) {
-                setRole('Physician');
-            } else if (isPatient) {
-                setRole('Patient');
-            } else if (isPharmacy) {
-                setRole('Pharmacy');
-            } else {
-                setRole('Account is not Registered');
+            if (isMounted) { // update state only if component is still mounted
+                if (isAdministrator) {
+                    setRole('Administrator');
+                } else if (isRegulatoryAuthority) {
+                    setRole('Regulatory Authority');
+                } else if (isPhysician) {
+                    setRole('Physician');
+                } else if (isPatient) {
+                    setRole('Patient');
+                } else if (isPharmacy) {
+                    setRole('Pharmacy');
+                } else {
+                    setRole('Account is not Registered');
+                }
             }
         } catch (err) {
-            setError(err.message);
-            if (err.message === 'MetaMask is not installed') {
-                setEthereumAvailable(false);
+            if (isMounted) { // update state only if component is still mounted
+                setError(err.message);
+                if (err.message === 'MetaMask is not installed') {
+                    setEthereumAvailable(false);
+                }
             }
         } finally {
-            setLoading(false);
+            if (isMounted) { // update state only if component is still mounted
+                setLoading(false);
+            }
         }
+        // Cleanup function to set the mounted flag to false
+        return () => {
+            isMounted = false;
+        };
     };
 
     useEffect(() => {
@@ -85,6 +97,7 @@ const useUserRole = () => {
             window.ethereum.on('accountsChanged', handleAccountsChanged);
         }
 
+        // Cleanup listener on unmount
         return () => {
             if (window.ethereum) {
                 window.ethereum.removeListener('accountsChanged', handleAccountsChanged);

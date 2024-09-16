@@ -100,6 +100,9 @@ const Navbar = () => {
                             <li className="nav-item">
                                 <Link className="nav-link" to="/register-patient">Register Patient</Link>
                             </li>
+                            <li className="nav-item">
+                                <Link className="nav-link" to="/access-prescription">Access Prescription</Link>
+                            </li>
                             <li className="nav-item dropdown">
                                 <Link
                                     className="nav-link dropdown-toggle"

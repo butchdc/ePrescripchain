@@ -179,8 +179,8 @@ const PreviewPrescription = ({ prescriptionID, onBack }) => {
                 doc.text(`Drug ${index + 1}: ${drug.name}`, xOffset, yOffset);
                 doc.setFont('Helvetica', 'normal');
                 doc.text(`${drug.sig}`, xOffset, yOffset + lineHeight);
-                doc.text(`Mitte: ${drug.mitte} ${drug.mitteUnit}`, xOffset, yOffset + 3 * lineHeight);
-                doc.text(`Repeat: ${drug.repeat}`, xOffset + 40, yOffset + 3 * lineHeight);
+                doc.text(`Mitte: ${drug.mitte} ${drug.mitteUnit}`, xOffset, yOffset + 3 * (lineHeight+1));
+                doc.text(`Repeat: ${drug.repeat}`, xOffset + 40, yOffset + 3 * (lineHeight+1));
                 yOffset +=25; 
             });
 

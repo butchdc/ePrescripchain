@@ -63,6 +63,7 @@ function App() {
                       <Route path="/register-physician" element={<PhysicianRegistration />} />
                       <Route path="/register-pharmacy" element={<PharmacyRegistration />} />
                       <Route path="/register-patient" element={<PatientRegistration />} />
+                      <Route path='/access-prescription/' element={<AccessPrescription />} />
                       <Route path="/query-page" element={<QueryPage />} />
                       <Route path="/ipfs-query" element={<DownloadFromIPFS />} />
                     </>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { initWeb3, initContracts } from '../../utils/web3utils'; 
-import { downloadFromIPFS, saveStatusTimestampToDB } from '../../utils/apiutils'; 
+import { downloadFromIPFS, saveStatusTimestampToDB, updatePrescriptionPharmacyToDB } from '../../utils/apiutils'; 
 
 const apiBaseURL = process.env.REACT_APP_API_BASE_URL;
 
@@ -97,11 +97,7 @@ function PharmacySelection({ prescriptionID, onAssignmentSuccess }) {
                 .selectPharmacy(prescriptionID, selectedPharmacy.address)
                 .send({ from: currentUser });
 
-            const { data: [prescription] = [] } = await axios.get(`${apiBaseURL}prescriptions`, { params: { prescriptionID } });
-            if (!prescription) throw new Error('No prescription found with the given ID.');
-        
-            // Update the prescription with the assigned pharmacy
-            await axios.post(`${apiBaseURL}prescriptions`, { ...prescription, assignedTo: selectedPharmacy.address });
+            await updatePrescriptionPharmacyToDB(prescriptionID, selectedPharmacy.address);
 
             await saveStatusTimestampToDB(prescriptionID, 'Awaiting For Confirmation', Date.now());
 

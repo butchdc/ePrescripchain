@@ -13,7 +13,8 @@ const statusDescriptions = [
     "Preparing",
     "Ready For Collection",
     "Collected",
-    "Cancelled"
+    "Cancelled",
+    "Reassigned"
 ];
 
 const PhysicianHome = () => {
@@ -92,8 +93,8 @@ const PhysicianHome = () => {
                             const prescriptionData = await contracts.prescriptionContract.methods.accessPrescription(prescription.prescriptionID).call({ from: currentUser });
 
                             let pharmacyData = null;
-                            if (prescriptionData[2] > 0n) {
-                                const pharmacyAddress = await contracts.prescriptionContract.methods.getAssignedPharmacy(prescription.prescriptionID).call({ from: currentUser });
+                            const pharmacyAddress = await contracts.prescriptionContract.methods.getAssignedPharmacy(prescription.prescriptionID).call({ from: currentUser });
+                            if (pharmacyAddress>0) {
                                 const pharmacyIPFSHash = await contracts.registrationContract.methods.getPharmacyIPFSHash(pharmacyAddress).call();
                                 pharmacyData = await downloadFromIPFS(pharmacyIPFSHash);
                             }

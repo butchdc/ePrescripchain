@@ -142,6 +142,7 @@ const PatientHome = () => {
             {error && <p className="text-danger">Error: {error}</p>}
             {!loading && !error && (
                 <div>
+                    <h6 className=''>MY ACTIVE PRESCRIPTIONS</h6>
                     <table className="table table-bordered table-striped">
                         <thead>
                             <tr>

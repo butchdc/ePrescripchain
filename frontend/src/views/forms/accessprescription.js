@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { initWeb3, initContracts } from '../../utils/web3utils';
-import { downloadFromIPFS, updateStatusToDB, saveStatusTimestampToDB } from '../../utils/apiutils';
+import { downloadFromIPFS, updateStatusToDB, saveStatusTimestampToDB, updatePrescriptionPharmacyToDB } from '../../utils/apiutils';
 import PreviewPrescription from '../previewprescription';
 import PharmacySelection from './pharmacyselection';
 import { getUserRoleAndAttributes } from '../../utils/userqueryutils';
@@ -13,21 +13,9 @@ const statusDescriptions = [
     "Preparing",
     "Ready For Collection",
     "Collected",
-    "Cancelled"
+    "Cancelled",
+    "Reassigned"
 ];
-
-// status: "Awaiting Pharmacy Assignment",
-// note: "Your prescription has been created and is waiting to be assigned to a pharmacy."
-// status: "Awaiting For Confirmation",
-// note: "Your prescription has been assigned to a pharmacy and is awaiting confirmation."
-// status: "Preparing",
-// note: "Your prescription has been confirmed by the pharmacy and is now being prepared."
-// status: "Ready For Collection",
-// note: "Your prescription is ready for collection. You can pick it up from the pharmacy."
-// status: "Collected",
-// note: "Your prescription has been collected. Contact the pharmacy if you need further assistance."
-// status: "Cancelled",
-// note: "Your prescription has been cancelled by the physician. If you have questions, please contact the physician’s office."
 
 const AccessPrescription = () => {
     const [prescriptionID, setPrescriptionID] = useState('');
@@ -79,10 +67,14 @@ const AccessPrescription = () => {
         setPrescriptionDetails(null);
 
         try {
+            console.log(`${prescriptionID} : ${currentUser}`);
             const accessPrescriptionData = await contracts.prescriptionContract.methods.accessPrescription(prescriptionID).call({ from: currentUser });
+            console.log({accessPrescriptionData});
             const status = accessPrescriptionData[2];
 
             const prescriptionData = await downloadFromIPFS(accessPrescriptionData[1]);
+            console.log({prescriptionData});
+            console.log(status);
 
             const physicianIPFSHash = await contracts.registrationContract.methods.getPhysicianIPFSHash(prescriptionData.physicianAddress).call();
             const physicianData = await downloadFromIPFS(physicianIPFSHash);
@@ -91,8 +83,8 @@ const AccessPrescription = () => {
             const patientData = await downloadFromIPFS(patientIPFSHash);
 
             let pharmacyData = null;
-            if (status > 0 && status !== 5n) {
-                const pharmacyAddress = await contracts.prescriptionContract.methods.getAssignedPharmacy(prescriptionID).call({ from: currentUser });
+            const pharmacyAddress = await contracts.prescriptionContract.methods.getAssignedPharmacy(prescriptionID).call({ from: currentUser });
+            if (pharmacyAddress > 0) {
                 const pharmacyIPFSHash = await contracts.registrationContract.methods.getPharmacyIPFSHash(pharmacyAddress).call();
                 pharmacyData = await downloadFromIPFS(pharmacyIPFSHash);
             }
@@ -121,6 +113,12 @@ const AccessPrescription = () => {
 
             if (action=='acceptPrescription') {
                 await saveStatusTimestampToDB(prescriptionID, 'Preparing', Date.now());
+            }
+
+            if (action=='rejectPrescription') {
+
+                await updatePrescriptionPharmacyToDB(prescriptionID, null);
+                await saveStatusTimestampToDB(prescriptionID, 'Reassigned', Date.now());
             }
 
             if (action=='medicationPreparation') {
@@ -297,10 +295,20 @@ const AccessPrescription = () => {
                                                     <div>{prescriptionDetails.pharmacy.pharmacyAddress}</div>
                                                     <div>Phone: {prescriptionDetails.pharmacy.contactNumber}</div>
                                                     <div style={{ fontSize: 10 }}>{prescriptionDetails.pharmacy.address}</div>
+                                                    {prescriptionDetails.status < 2n && role==='Physician' &&
+                                                        <button
+                                                            className="btn btn-sm btn-warning"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#assignPharmacyModal"
+                                                        >
+                                                            Reassign Pharmacy
+                                                        </button>
+                                                    }
                                                 </div>
                                             ) : (
                                                 <div className="text-center">
                                                     <div className='mb-2'>No Pharmacy Assigned</div>
+                                                    {role==='Physician' && 
                                                     <button
                                                         className="btn btn-sm btn-warning"
                                                         data-bs-toggle="modal"
@@ -308,6 +316,7 @@ const AccessPrescription = () => {
                                                     >
                                                         Assign Pharmacy
                                                     </button>
+                                                    }
                                                 </div>
                                             )}
                                         </td>
@@ -338,9 +347,11 @@ const AccessPrescription = () => {
                             </table>
                             </div>
                             {/* Timeline */}
-                            <div className='col-3 vstack border-start gap-0'>
-                                {/* <div className='text-center h5'>Time Line</div> */}
-                                <TimeLine prescriptionID={prescriptionID}/>
+                            <div className='col-3 vstack border-start gap-0' >
+                                <div className='text-center h5 p-1' style={{backgroundColor:'#CFF4FC'}}>Status Timeline</div>
+                                <div style={{maxHeight:550, overflow:'auto'}}>
+                                    <TimeLine prescriptionID={prescriptionID}/>
+                                </div>
                             </div>
                         </div>
                     </div>
