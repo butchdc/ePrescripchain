@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { initWeb3, initContracts } from '../utils/web3utils'; 
 
-const useUserRole = () => {
+const useUserRole = (navigate) => {
     const [role, setRole] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -69,6 +69,7 @@ const useUserRole = () => {
         const handleAccountsChanged = (accounts) => {
             if (accounts.length > 0) {
                 fetchUserRole(accounts[0]);
+                navigate('/');
             }
         };
 

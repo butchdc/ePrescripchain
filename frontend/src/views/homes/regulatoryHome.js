@@ -1,16 +1,37 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 
-// Retrieve the API base URL from environment variables
 const apiBaseURL = process.env.REACT_APP_API_BASE_URL;
+
+const iconStyle = { fontSize: '3rem' };
+
+const iconMap = {
+    regulatory_authorities: (
+        <i className="bi bi-building" style={iconStyle}></i>
+    ),
+    physicians: (
+        <i className="bi bi-person" style={iconStyle}></i>
+    ),
+    patients: (
+        <i className="bi bi-people" style={iconStyle}></i>
+    ),
+    pharmacies: (
+        <i className="bi bi-prescription2" style={iconStyle}></i>
+    ),
+    prescriptions_created: (
+        <i className="bi bi-prescription" style={iconStyle}></i> 
+    )
+};
 
 const RegulatoryHome = () => {
     const [counts, setCounts] = useState({
+        regulatory_authorities: 0,
         physicians: 0,
         patients: 0,
         pharmacies: 0,
-        regulatory_authorities: 0
+        prescriptions_created: 0 
     });
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         const fetchCounts = async () => {
@@ -19,16 +40,19 @@ const RegulatoryHome = () => {
                     axios.get(`${apiBaseURL}entities/count/physicians`),
                     axios.get(`${apiBaseURL}entities/count/patients`),
                     axios.get(`${apiBaseURL}entities/count/pharmacies`),
-                    axios.get(`${apiBaseURL}entities/count/regulatory_authorities`)
+                    axios.get(`${apiBaseURL}entities/count/regulatory_authorities`),
+                    axios.get(`${apiBaseURL}prescriptions/count`) // New API call
                 ]);
 
                 setCounts({
+                    regulatory_authorities: responses[3].data.count,
                     physicians: responses[0].data.count,
-                    patients: responses[1].data.count,
                     pharmacies: responses[2].data.count,
-                    regulatory_authorities: responses[3].data.count
+                    patients: responses[1].data.count,
+                    prescriptions_created: responses[4].data.count,
                 });
             } catch (error) {
+                setError('Failed to fetch data. Please try again later.');
                 console.error('Error fetching entity counts:', error);
             }
         };
@@ -37,35 +61,33 @@ const RegulatoryHome = () => {
     }, []);
 
     return (
-        <div className="container bgcolor2 p-3">
+        <div className="container my-3 bgcolor2">
             <h4 className="mb-4">Regulatory Authority Dashboard</h4>
-            <div className="row gap-2">
-                <div className="card bgcolor2 col-md-6 col-lg-5 p-0">
-                    <h6 className="card-header bgcolor3">Registered Regulatory Authorities</h6>
-                    <div className="card-body p-3 text-center rounded bg-white">
-                        <div className="display-1">{counts.regulatory_authorities}</div>
-                    </div>
+            {error ? (
+                <div className="alert alert-danger" role="alert">
+                    {error}
                 </div>
-                <div className="card bgcolor2 col-md-6 col-lg-5 p-0">
-                    <h6 className="card-header bgcolor3">Registered Physicians</h6>
-                    <div className="card-body p-3 text-center rounded bg-white">
-                        <div className="display-1">{counts.physicians}</div>
-                    </div>
+            ) : (
+                <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4"> {/* Adjust column count if needed */}
+                    {Object.keys(counts).map(key => (
+                        <div className={`col ${key === 'prescriptions_created' ||  key === 'patients' ? 'col-lg-6' : ''}`} key={key}>
+                            <div className="card text-center h-100 shadow">
+                                <div className="card-body d-flex flex-column align-items-center">
+                                    <div className="mb-3">
+                                        {iconMap[key]}
+                                    </div>
+                                    <h6 className="card-title text-secondary h5">
+                                        {`${key.replace('_', ' ').replace(/\b\w/g, char => char.toUpperCase())}`}
+                                    </h6>
+                                    <p className="card-text display-4 text-primary mb-0">
+                                        {counts[key]}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
                 </div>
-                <div className="card bgcolor2 col-md-6 col-lg-5 p-0">
-                    <h6 className="card-header bgcolor3">Registered Patients</h6>
-                    <div className="card-body p-3 text-center rounded bg-white">
-                        <div className="display-1">{counts.patients}</div>
-                    </div>
-                </div>
-                <div className="card bgcolor2 col-md-6 col-lg-5 p-0">
-                    <h6 className="card-header bgcolor3">Registered Pharmacies</h6>
-                    <div className="card-body p-3 text-center rounded bg-white">
-                        <div className="display-1">{counts.pharmacies}</div>
-                    </div>
-                </div>
-
-            </div>
+            )}
         </div>
     );
 }

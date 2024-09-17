@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { initWeb3, initContracts } from '../../utils/web3utils';
 import { downloadFromIPFS } from '../../utils/apiutils';
-import PharmacySelection from '../forms/pharmacyselection'; 
 import { Link } from 'react-router-dom';
+import {QRCodeSVG} from 'qrcode.react';
 
 const apiBaseURL = process.env.REACT_APP_API_BASE_URL;
 
@@ -107,6 +107,7 @@ const PhysicianHome = () => {
                                 date: prescription.date,
                                 pharmacyName: pharmacyData ? pharmacyData.pharmacyName : null,
                                 pharmacyAddress: pharmacyData ? pharmacyData.pharmacyAddress : null,
+                                pharmacyContactNo:  pharmacyData ? pharmacyData.contactNumber : null,
                                 status: prescriptionData[2]
                             };
                         } catch (err) {
@@ -156,25 +157,26 @@ const PhysicianHome = () => {
             {!loading && !error && (
                 <div>
                     <h6 className=''>MY ACTIVE PRESCRIPTIONS</h6>
-                    <table className="table table-bordered table-striped">
+                    <table className="table table-bordered table-striped shadow">
                         <thead>
                             <tr>
                                 <th className='col-2 text-center'>Date / Prescription ID</th>                            
-                                <th>Patient</th>
+                                <th className='text-center'>Patient</th>
                                 <th className='col-2 text-center'>Status</th>
-                                <th className='text-center'>Pharmacy</th>
+                                <th className='text-center'>Assigned Pharmacy</th>
                                 <th className='col-2 text-center'>Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             {prescriptions.length > 0 ? (
                                 prescriptions.map((prescription, index) => (
-                                    <tr key={index}>
+                                    <tr key={index} style={{verticalAlign:'middle'}}>
                                         <td className='text-center'>
-                                            <div>Date: {formatDate(prescription.date)}</div>
-                                            <div style={{ fontSize: 12 }}>{prescription.id}</div>
+                                            <div className=''>{formatDate(prescription.date)}</div>
+                                            <QRCodeSVG value={prescription.id.toString()} size={80} />
+                                            <div className='mt-1' style={{ fontSize: 8 }}>{prescription.id}</div>
                                         </td>
-                                        <td>
+                                        <td className='text-center'>
                                             <div className="vstack">
                                                 <div className='m-0 p-0'>{prescription.patientName}</div>
                                                 <div>{prescription.patientNHI}</div>
@@ -186,18 +188,12 @@ const PhysicianHome = () => {
                                         </td>
                                         <td className='text-center'>
                                             {!prescription.pharmacyName ? (
-                                                <button 
-                                                    className="btn btn-sm btn-warning"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#assignPharmacyModal"
-                                                    onClick={() => handleAssign(prescription.id)}
-                                                >
-                                                    Assign Pharmacy
-                                                </button>
+                                                <div className="">No Pharmacy Assigned</div>
                                             ) : (
                                                 <div className="vstack">
                                                     <div className='m-0 p-0'>{prescription.pharmacyName}</div>
                                                     <div style={{ fontSize: 10 }}>{prescription.pharmacyAddress}</div>
+                                                    <div style={{ fontSize: 14 }}>Phone: {prescription.pharmacyContactNo}</div>
                                                 </div>
                                             )}
                                         </td>
@@ -205,10 +201,8 @@ const PhysicianHome = () => {
                                             <Link className="btn btn-sm btn-info"
                                                 to={`/access-prescription/${prescription.id}`}
                                             >
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" className="bi bi-prescription" viewBox="0 0 16 16">
-                                                <path d="M5.5 6a.5.5 0 0 0-.5.5v4a.5.5 0 0 0 1 0V9h.293l2 2-1.147 1.146a.5.5 0 0 0 .708.708L9 11.707l1.146 1.147a.5.5 0 0 0 .708-.708L9.707 11l1.147-1.146a.5.5 0 0 0-.708-.708L9 10.293 7.695 8.987A1.5 1.5 0 0 0 7.5 6zM6 7h1.5a.5.5 0 0 1 0 1H6z"/>
-                                                <path d="M2 1a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1v10.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 3 14.5V4a1 1 0 0 1-1-1zm2 3v10.5a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5V4zM3 3h10V1H3z"/>
-                                                </svg> View Details
+                                                <i className="bi bi-prescription" style={{fontSize:24}}></i>
+                                                <div style={{fontSize:10}}>View</div>
                                             </Link>
                                         </td>
                                     </tr>
@@ -220,31 +214,6 @@ const PhysicianHome = () => {
                             )}
                         </tbody>
                     </table>
-
-                    {/* Modal for assigning pharmacy */}
-                    <div className="modal fade" id="assignPharmacyModal" tabIndex="-1" aria-labelledby="assignPharmacyModalLabel" aria-hidden="true">
-                        <div className="modal-dialog modal-lg">
-                            <div className="modal-content">
-                                <div className="modal-header bgcolor3">
-                                    <h5 className="modal-title" id="assignPharmacyModalLabel">Assign Pharmacy</h5>
-                                    <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div className="modal-body p-2">
-                                    <PharmacySelection prescriptionID={selectedPrescriptionID} onAssignmentSuccess={handleAssignmentSuccess} />
-                                </div>
-                                <div className="modal-footer">
-                                    <button 
-                                        type="button" 
-                                        className="btn btn-secondary" 
-                                        data-bs-dismiss="modal"
-                                        ref={closeButtonRef}
-                                    >
-                                        Close
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             )}
         </div>

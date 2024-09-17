@@ -1,5 +1,5 @@
 import './App.css';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useNavigate } from 'react-router-dom';
 import About from './views/about';
 import Navbar from './views/navbar';
 import RegulatoryAuthorityRegistration from './views/forms/regulatoryauthorityregistration'; 
@@ -19,7 +19,6 @@ import AccessPrescription from './views/forms/accessprescription';
 import PharmacyHome from './views/homes/pharmacyHome';
 import PatientHome from './views/homes/patientHome';
 
-// Component to handle errors
 const ErrorBoundary = ({ error, children }) => {
   if (error) {
     return <div>Error: {error}</div>;
@@ -27,76 +26,84 @@ const ErrorBoundary = ({ error, children }) => {
   return children;
 };
 
-function App() {
-  const { role, loading, error, ethereumAvailable } = useUserRole();
+// Wrapper component to handle role and navigation
+const AppRoutes = () => {
+  const navigate = useNavigate();
+  const { role, loading, error, ethereumAvailable } = useUserRole(navigate);
 
   if (loading) return <div>Loading...</div>;
 
   return (
+    <>
+      {!ethereumAvailable && (
+        <div className="alert alert-warning" role="alert">
+          MetaMask is not installed. Some features may not be available.
+        </div>
+      )}
+      <Navbar role={role} />
+      <Routes>
+        <Route path="/config" element={<ConfigPage />} />
+        <Route path="/sample" element={<Sample />} />
+        <Route
+          path="*"
+          element={
+            <ErrorBoundary error={error}>
+              <Routes>
+                <Route path="/about" element={<About />} />
+                {role === 'Administrator' && (
+                  <>
+                    <Route path="/register-regulatory-authority" element={<RegulatoryAuthorityRegistration />} />
+                    <Route path="/query-page" element={<QueryPage />} />
+                    <Route path="/ipfs-query" element={<DownloadFromIPFS />} />
+                  </>
+                )}
+                {role === 'Regulatory Authority' && (
+                  <>
+                    <Route path="/" element={<RegulatoryHome />} />
+                    <Route path="/register-physician" element={<PhysicianRegistration />} />
+                    <Route path="/register-pharmacy" element={<PharmacyRegistration />} />
+                    <Route path="/register-patient" element={<PatientRegistration />} />
+                    <Route path='/access-prescription/' element={<AccessPrescription />} />
+                    <Route path="/query-page" element={<QueryPage />} />
+                    <Route path="/ipfs-query" element={<DownloadFromIPFS />} />
+                  </>
+                )}
+                {role === 'Physician' && (
+                  <>
+                    <Route path='/' element={<PhysicianHome />} />
+                    <Route path='/create-prescription' element={<PrescriptionForm />} />
+                    <Route path='/access-prescription/' element={<AccessPrescription />} />
+                    <Route path='/access-prescription/:pID' element={<AccessPrescription />} />
+                  </>
+                )}
+                {role === 'Pharmacy' && (
+                  <>
+                    <Route path='/' element={<PharmacyHome />} />
+                    <Route path='/access-prescription/' element={<AccessPrescription />} />
+                    <Route path='/access-prescription/:pID' element={<AccessPrescription />} />
+                  </>
+                )}
+                {role === 'Patient' && (
+                  <>
+                    <Route path='/' element={<PatientHome />} />
+                    <Route path='/access-prescription/' element={<AccessPrescription />} />
+                    <Route path='/access-prescription/:pID' element={<AccessPrescription />} />
+                  </>
+                )}
+                <Route path="*" element={<RedirectToHome />} />
+              </Routes>
+            </ErrorBoundary>
+          }
+        />
+      </Routes>
+    </>
+  );
+};
+
+function App() {
+  return (
     <Router>
-      <div className="App">
-        {!ethereumAvailable && (
-          <div className="alert alert-warning" role="alert">
-            MetaMask is not installed. Some features may not be available.
-          </div>
-        )}
-        <Navbar role={role} />
-        <Routes>
-          <Route path="/config" element={<ConfigPage />} />
-          <Route path="/sample" element={<Sample />} />
-          <Route
-            path="*"
-            element={
-              <ErrorBoundary error={error}>
-                <Routes>
-                  <Route path="/about" element={<About />} />
-                  {role === 'Administrator' && (
-                    <>
-                      <Route path="/register-regulatory-authority" element={<RegulatoryAuthorityRegistration />} />
-                      <Route path="/query-page" element={<QueryPage />} />
-                      <Route path="/ipfs-query" element={<DownloadFromIPFS />} />
-                    </>
-                  )}
-                  {role === 'Regulatory Authority' && (
-                    <>
-                      <Route path="/" element={<RegulatoryHome />} />
-                      <Route path="/register-physician" element={<PhysicianRegistration />} />
-                      <Route path="/register-pharmacy" element={<PharmacyRegistration />} />
-                      <Route path="/register-patient" element={<PatientRegistration />} />
-                      <Route path='/access-prescription/' element={<AccessPrescription />} />
-                      <Route path="/query-page" element={<QueryPage />} />
-                      <Route path="/ipfs-query" element={<DownloadFromIPFS />} />
-                    </>
-                  )}
-                  {role === 'Physician' && (
-                    <>
-                      <Route path='/' element={<PhysicianHome />} />
-                      <Route path='/create-prescription' element={<PrescriptionForm />} />
-                      <Route path='/access-prescription/' element={<AccessPrescription />} />
-                      <Route path='/access-prescription/:pID' element={<AccessPrescription />} />
-                    </>
-                  )}
-                  {role === 'Pharmacy' && (
-                    <>
-                      <Route path='/' element={<PharmacyHome />} />
-                      <Route path='/access-prescription/' element={<AccessPrescription />} />
-                      <Route path='/access-prescription/:pID' element={<AccessPrescription />} />
-                    </>
-                  )}
-                  {role === 'Patient' && (
-                    <>
-                      <Route path='/' element={<PatientHome />} />
-                      <Route path='/access-prescription/' element={<AccessPrescription />} />
-                      <Route path='/access-prescription/:pID' element={<AccessPrescription />} />
-                    </>
-                  )}
-                  <Route path="*" element={<RedirectToHome />} />
-                </Routes>
-              </ErrorBoundary>
-            }
-          />
-        </Routes>
-      </div>
+      <AppRoutes />
     </Router>
   );
 }

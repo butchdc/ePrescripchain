@@ -120,6 +120,48 @@ router.delete('/:prescriptionID', (req, res) => {
   });
 });
 
+// Route to get the count of prescriptions with optional filters
+router.get('/count', (req, res) => {
+  const { physicianID, pharmacyID, patientID } = req.query;
+
+  console.log(`[${getCurrentTimestamp()}] GET request received to count prescriptions with filters:`, req.query);
+
+  // Base query
+  let query = 'SELECT COUNT(*) AS count FROM prescriptions';
+  const params = [];
+
+  // Build filter conditions
+  const conditions = [];
+  if (physicianID) {
+    conditions.push('createdBy = ?');
+    params.push(physicianID);
+  }
+  if (pharmacyID) {
+    conditions.push('assignedTo = ?'); 
+    params.push(pharmacyID);
+  }
+  if (patientID) {
+    conditions.push('address = ?'); 
+    params.push(patientID);
+  }
+
+  // Append conditions to the query
+  if (conditions.length > 0) {
+    query += ' WHERE ' + conditions.join(' AND ');
+  }
+
+  console.log(`[${getCurrentTimestamp()}] Executing query: ${query}, params: ${params}`);
+
+  db.get(query, params, (err, row) => {
+    if (err) {
+      console.error(`[${getCurrentTimestamp()}] Error counting prescriptions:`, err.message);
+      return res.status(500).json({ error: 'An error occurred while counting prescriptions.' });
+    }
+    res.json({ count: row.count });
+  });
+});
+
+
 // Route to add a status timestamp
 router.post('/status-timestamps', (req, res) => {
   const { prescriptionID, status, timestamp, notes } = req.body;
@@ -170,5 +212,7 @@ router.get('/status-timestamps/:prescriptionID', (req, res) => {
     res.json(rows);
   });
 });
+
+
 
 module.exports = router;
