@@ -17,6 +17,16 @@ const statusDescriptions = [
     "Reassigned"
 ];
 
+const statusColors = [
+    "#D3D3D3", // Light Gray
+    "#ADD8E6", // Light Blue
+    "#FFDAB9", // Light Orange
+    "#90EE90", // Light Green
+    "#D8BFD8", // Light Purple
+    "#F08080", // Light Coral
+    "#FFFFE0" // Light Yellow
+];
+
 const AccessPrescription = () => {
     const [prescriptionID, setPrescriptionID] = useState('');
     const [prescriptionDetails, setPrescriptionDetails] = useState(null);
@@ -67,14 +77,12 @@ const AccessPrescription = () => {
         setPrescriptionDetails(null);
 
         try {
-            console.log(`${prescriptionID} : ${currentUser}`);
+
             const accessPrescriptionData = await contracts.prescriptionContract.methods.accessPrescription(prescriptionID).call({ from: currentUser });
-            console.log({accessPrescriptionData});
+
             const status = accessPrescriptionData[2];
 
             const prescriptionData = await downloadFromIPFS(accessPrescriptionData[1]);
-            console.log({prescriptionData});
-            console.log(status);
 
             const physicianIPFSHash = await contracts.registrationContract.methods.getPhysicianIPFSHash(prescriptionData.physicianAddress).call();
             const physicianData = await downloadFromIPFS(physicianIPFSHash);
@@ -154,8 +162,6 @@ const AccessPrescription = () => {
         return <PreviewPrescription prescriptionID={prescriptionID} onBack={handlePrintBack} />;
     }
 
-    
-
     return (
         <div className="container-fluid mt-2 bgcolor2 p-0 ps-3 pe-3">
             <h4 className="mb-3">Access Prescription</h4>
@@ -188,37 +194,35 @@ const AccessPrescription = () => {
             {prescriptionDetails && (
                 <div className="border p-2 rounded shadow bgcolor3">
                     <div className='vstack'>
-                        <div className='hstack gap-4 mb-2 pb-2 border-bottom'>
-                                <div className='hstack gap-2 col'>
-                                    <div className='mediumfont'>Status:</div>
-                                    <div className={`h3 m-0 ${prescriptionDetails.status === 5n ? 'text-danger' : (prescriptionDetails.status === 1n ? 'text-warning' : 'text-success')}`}>
-                                        {statusDescriptions[prescriptionDetails.status]}
-                                    </div>
+                        <div className='hstack gap-4 mb-2 pb-2 border-bottom' style={{verticalAlign:'middle'}}>
+                                <div className='h3 p-2 m-0 col-auto rounded text-dark' style={{background: statusColors[prescriptionDetails.status]}}>
+                                    {statusDescriptions[prescriptionDetails.status]}
                                 </div>
+                                <div className='col'></div>
                                 <div className='hstack gap-2 col-auto'>
                                     <div className='mediumfont'>Rx Date:</div>
                                     <div>{prescriptionDetails.rxDate}</div>
                                 </div>
                                 <div className='col-auto hstack gap-2'>
                                     {(role === 'Physician' || role === 'Pharmacy' || role) &&
-                                        <button className='btn btn-sm btn-primary' onClick={handlePrint}>
+                                        <button className='btn btn-sm btn-primary buttonWidth' onClick={handlePrint}>
                                             <i className='bi bi-printer-fill' style={{fontSize:28}} ></i>
                                             <div style={{fontSize:12}}>Print</div>
                                         </button>
                                     }
                                     {(role === 'Physician' && (prescriptionDetails.status === 0n || prescriptionDetails.status === 1n)) &&
-                                        <button className='btn btn-sm btn-danger' onClick={() => handleAction('cancelPrescription')}>
+                                        <button className='btn btn-sm btn-danger buttonWidth' onClick={() => handleAction('cancelPrescription')}>
                                             <i className='bi bi-x-circle-fill' style={{fontSize:28}} ></i>
                                             <div style={{fontSize:12}}>Cancel</div>
                                         </button>
                                     }
                                     {role === 'Pharmacy' && prescriptionDetails.status === 1n &&
                                         <div className="hstack gap-2">
-                                            <button className="btn btn-sm btn-success" onClick={() => handleAction('acceptPrescription')}>
+                                            <button className="btn btn-sm btn-success buttonWidth" onClick={() => handleAction('acceptPrescription')}>
                                                 <i className='bi bi-check-circle-fill' style={{fontSize:28}} ></i>
                                                 <div style={{fontSize:12}}>Accept</div>
                                             </button>
-                                            <button className="btn btn-sm btn-warning" onClick={() => handleAction('rejectPrescription')}>
+                                            <button className="btn btn-sm btn-warning buttonWidth" onClick={() => handleAction('rejectPrescription')}>
                                                 <i className='bi bi-reply-fill' style={{fontSize:28}} ></i>
                                                 <div style={{fontSize:12}}>Return</div>
                                             </button>
@@ -226,7 +230,7 @@ const AccessPrescription = () => {
                                     }
                                     {role === 'Pharmacy' && prescriptionDetails.status === 2n &&
                                         <div className="hstack gap-2">
-                                            <button className="btn btn-sm btn-info" onClick={() => handleAction('medicationPreparation')}>
+                                            <button className="btn btn-sm btn-info buttonWidth" onClick={() => handleAction('medicationPreparation')}>
                                                 <i className='bi bi-capsule-pill' style={{fontSize:28}} ></i>
                                                 <div style={{fontSize:12}}>Ready</div>
                                             </button>
@@ -234,7 +238,7 @@ const AccessPrescription = () => {
                                     }
                                     {role === 'Pharmacy' && prescriptionDetails.status === 3n &&
                                         <div className="hstack gap-2">
-                                            <button className="btn btn-sm btn-success" onClick={() => handleAction('medicationCollection')}>
+                                            <button className="btn btn-sm btn-success buttonWidth" onClick={() => handleAction('medicationCollection')}>
                                                 <i className='bi bi-bag-check-fill' style={{fontSize:28}} ></i>
                                                 <div style={{fontSize:12}}>Collected</div>
                                             </button>
@@ -243,105 +247,105 @@ const AccessPrescription = () => {
                                 </div>
                         </div>
                         <div className='hstack'>
-                            <div className='vstack ps-2 pe-2'>
-                            <table className='table table-sm'>
-                                <thead className='table-info'>
-                                    <tr className='text-center'>
-                                        <td className='h5 col-4'>Physician</td>
-                                        <td className='h5 col-4 border-start'>Patient</td>
-                                        <td className='h5 col-4 border-start'>Pharmacy</td>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td className='p-3'>
-                                            {prescriptionDetails.physician ? (
-                                                <div>
-                                                    <div>{prescriptionDetails.physician.name}</div>
-                                                    <div>{prescriptionDetails.physician.speciality}</div>
-                                                    <div>NZMC: {prescriptionDetails.physician.nzmcNo}</div>
-                                                    <div>Phone: {prescriptionDetails.physician.contactNumber}</div>
-                                                    <div style={{ fontSize: 10 }}>{prescriptionDetails.physician.address}</div>
-                                                </div>
-                                            ) : (
-                                                <div>Physician details not available</div>
-                                            )}
-                                        </td>
-                                        <td className='p-3 border-start'>
-                                            {prescriptionDetails.patient ? (
-                                                <div>
-                                                    <div>{prescriptionDetails.patient.name}</div>
-                                                    <div>{prescriptionDetails.patient.patientAddress}</div>
-                                                    <div>DOB: {prescriptionDetails.patient.dateOfBirth}</div>
-                                                    <div>NHI: {prescriptionDetails.patient.nhiNumber}</div>
-                                                    <div style={{ fontSize: 10 }}>{prescriptionDetails.patient.address}</div>
-                                                </div>
-                                            ) : (
-                                                <div>Patient details not available</div>
-                                            )}
-                                        </td>
-                                        <td className='p-3 border-start'>
-                                            {prescriptionDetails.pharmacy ? (
-                                                <div>
-                                                    <div>{prescriptionDetails.pharmacy.pharmacyName}</div>
-                                                    <div>{prescriptionDetails.pharmacy.pharmacyAddress}</div>
-                                                    <div>Phone: {prescriptionDetails.pharmacy.contactNumber}</div>
-                                                    <div style={{ fontSize: 10 }}>{prescriptionDetails.pharmacy.address}</div>
-                                                    {prescriptionDetails.status < 2n && role==='Physician' &&
+                            <div className='vstack ps-2 pe-2 gap-1'>
+                                <table className='table table-sm table-striped m-0' style={{borderRadius:'.5rem', overflow:'hidden'}}>
+                                    <thead className=''>
+                                        <tr className='text-center'>
+                                            <td className='h5 col-4'>Physician</td>
+                                            <td className='h5 col-4 border-start'>Patient</td>
+                                            <td className='h5 col-4 border-start'>Pharmacy</td>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td className='p-3'>
+                                                {prescriptionDetails.physician ? (
+                                                    <div>
+                                                        <div>{prescriptionDetails.physician.name}</div>
+                                                        <div>{prescriptionDetails.physician.speciality}</div>
+                                                        <div>NZMC: {prescriptionDetails.physician.nzmcNo}</div>
+                                                        <div>Phone: {prescriptionDetails.physician.contactNumber}</div>
+                                                        <div style={{ fontSize: 10 }}>{prescriptionDetails.physician.address}</div>
+                                                    </div>
+                                                ) : (
+                                                    <div>Physician details not available</div>
+                                                )}
+                                            </td>
+                                            <td className='p-3 border-start'>
+                                                {prescriptionDetails.patient ? (
+                                                    <div>
+                                                        <div>{prescriptionDetails.patient.name}</div>
+                                                        <div>{prescriptionDetails.patient.patientAddress}</div>
+                                                        <div>DOB: {prescriptionDetails.patient.dateOfBirth}</div>
+                                                        <div>NHI: {prescriptionDetails.patient.nhiNumber}</div>
+                                                        <div style={{ fontSize: 10 }}>{prescriptionDetails.patient.address}</div>
+                                                    </div>
+                                                ) : (
+                                                    <div>Patient details not available</div>
+                                                )}
+                                            </td>
+                                            <td className='p-3 border-start'>
+                                                {prescriptionDetails.pharmacy ? (
+                                                    <div>
+                                                        <div>{prescriptionDetails.pharmacy.pharmacyName}</div>
+                                                        <div>{prescriptionDetails.pharmacy.pharmacyAddress}</div>
+                                                        <div>Phone: {prescriptionDetails.pharmacy.contactNumber}</div>
+                                                        <div style={{ fontSize: 10 }}>{prescriptionDetails.pharmacy.address}</div>
+                                                        {prescriptionDetails.status < 2n && role==='Physician' &&
+                                                            <button
+                                                                className="btn btn-sm btn-warning"
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#assignPharmacyModal"
+                                                            >
+                                                                Reassign Pharmacy
+                                                            </button>
+                                                        }
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-center">
+                                                        <div className='mb-2'>No Pharmacy Assigned</div>
+                                                        {role==='Physician' && 
                                                         <button
                                                             className="btn btn-sm btn-warning"
                                                             data-bs-toggle="modal"
                                                             data-bs-target="#assignPharmacyModal"
                                                         >
-                                                            Reassign Pharmacy
+                                                            Assign Pharmacy
                                                         </button>
-                                                    }
-                                                </div>
-                                            ) : (
-                                                <div className="text-center">
-                                                    <div className='mb-2'>No Pharmacy Assigned</div>
-                                                    {role==='Physician' && 
-                                                    <button
-                                                        className="btn btn-sm btn-warning"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#assignPharmacyModal"
-                                                    >
-                                                        Assign Pharmacy
-                                                    </button>
-                                                    }
-                                                </div>
-                                            )}
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                            <table className='table table-sm table-striped'>
-                                <thead className='table-info'>
-                                    <tr className='text-center'>
-                                        <td className='col-1'>Index</td>
-                                        <td className='col-3 border-start'>Drug</td>
-                                        <td className='col-5 border-start'>Sig</td>
-                                        <td className='col-2 border-start'>Mitte</td>
-                                        <td className='col-1 border-start'>Repeat</td>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {prescriptionDetails.prescription.drugs.map((drug, index) => (
-                                        <tr key={index} className='text-center'>
-                                            <td className='p-1'>{index + 1}</td>
-                                            <td className='p-1 border-start'>{drug.name}</td>
-                                            <td className='p-1 border-start'>{drug.sig}</td>
-                                            <td className='p-1 border-start'>{drug.mitte} {drug.mitteUnit}</td>
-                                            <td className='p-1 border-start'>{drug.repeat}</td>
+                                                        }
+                                                    </div>
+                                                )}
+                                            </td>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </tbody>
+                                </table>
+                                <table className='table table-sm table-striped m-0' style={{borderRadius:'.5rem', overflow:'hidden'}}>
+                                    <thead className=''>
+                                        <tr className='text-center'>
+                                            <td className='col-1'>Index</td>
+                                            <td className='col-3 border-start'>Drug</td>
+                                            <td className='col-5 border-start'>Sig</td>
+                                            <td className='col-2 border-start'>Mitte</td>
+                                            <td className='col-1 border-start'>Repeat</td>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {prescriptionDetails.prescription.drugs.map((drug, index) => (
+                                            <tr key={index} className='text-center'>
+                                                <td className='p-1'>{index + 1}</td>
+                                                <td className='p-1 border-start'>{drug.name}</td>
+                                                <td className='p-1 border-start'>{drug.sig}</td>
+                                                <td className='p-1 border-start'>{drug.mitte} {drug.mitteUnit}</td>
+                                                <td className='p-1 border-start'>{drug.repeat}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                             {/* Timeline */}
                             <div className='col-3 vstack border-start gap-0' >
                                 <div className='text-center h5 p-1' style={{backgroundColor:'#CFF4FC'}}>Status Timeline</div>
-                                <div style={{maxHeight:550, overflow:'auto'}}>
+                                <div style={{maxHeight:300, overflow:'auto'}}>
                                     <TimeLine prescriptionID={prescriptionID}/>
                                 </div>
                             </div>

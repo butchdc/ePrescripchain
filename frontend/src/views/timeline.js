@@ -11,14 +11,12 @@ const TimeLine = ({prescriptionID}) => {
     const fetchData = async () => {
       try {
         const response = await axios.get(`${apiBaseURL}prescriptions/status-timestamps/${prescriptionID}?sortColumn=timestamp&sortOrder=DESC`);
-        console.log('API Response:', response.data); // Log the response data
 
         const transformedItems = response.data.map(item => ({
           cardTitle: `${new Date(item.timestamp).toLocaleString()} - ${item.status}`,
           cardSubtitle: item.notes,
         }));
 
-        console.log('Transformed Items:', transformedItems); // Log the transformed data
         setItems(transformedItems);
       } catch (error) {
         console.error('Error fetching data:', error);

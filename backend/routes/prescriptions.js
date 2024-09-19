@@ -23,7 +23,7 @@ const buildQuery = (conditions, sort) => {
   if (conditions && Object.keys(conditions).length) {
     const validConditions = Object.entries(conditions)
       .filter(([key, value]) => value != null && value !== '') // Filter out undefined, null, and empty strings
-      .map(([key]) => `${key} = ?`);
+      .map(([key]) => `${key} COLLATE NOCASE = ?`); // Add COLLATE NOCASE for case-insensitive comparison
 
     if (validConditions.length > 0) {
       query += ' WHERE ' + validConditions.join(' AND ');
@@ -40,6 +40,7 @@ const buildQuery = (conditions, sort) => {
 
   return { query, params };
 };
+
 
 
 // Route to get all prescriptions or filter by conditions with optional sorting
@@ -133,15 +134,15 @@ router.get('/count', (req, res) => {
   // Build filter conditions
   const conditions = [];
   if (physicianID) {
-    conditions.push('createdBy = ?');
+    conditions.push('createdBy COLLATE NOCASE = ?'); // Add COLLATE NOCASE for case-insensitive comparison
     params.push(physicianID);
   }
   if (pharmacyID) {
-    conditions.push('assignedTo = ?'); 
+    conditions.push('assignedTo COLLATE NOCASE = ?'); // Add COLLATE NOCASE for case-insensitive comparison
     params.push(pharmacyID);
   }
   if (patientID) {
-    conditions.push('address = ?'); 
+    conditions.push('address COLLATE NOCASE = ?'); // Add COLLATE NOCASE for case-insensitive comparison
     params.push(patientID);
   }
 
@@ -160,6 +161,7 @@ router.get('/count', (req, res) => {
     res.json({ count: row.count });
   });
 });
+
 
 
 // Route to add a status timestamp

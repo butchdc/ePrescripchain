@@ -16,6 +16,16 @@ const statusDescriptions = [
     "Cancelled"
 ];
 
+const statusColors = [
+    "#D3D3D3", // Light Gray
+    "#ADD8E6", // Light Blue
+    "#FFDAB9", // Light Orange
+    "#90EE90", // Light Green
+    "#D8BFD8", // Light Purple
+    "#F08080", // Light Coral
+    "#FFFFE0" // Light Yellow
+];
+
 const PatientHome = () => {
     const [state, setState] = useState({
         prescriptions: [],
@@ -67,7 +77,7 @@ const PatientHome = () => {
                       status: 'In-Progress' 
                     }
                   });
-
+                  
                 if (response.data.message && response.data.message.includes('No prescriptions found')) {
                     setState(prevState => ({ ...prevState, prescriptions: [], error: null, loading: false }));
                     return;
@@ -143,33 +153,33 @@ const PatientHome = () => {
             {!loading && !error && (
                 <div>
                     <h6 className=''>MY ACTIVE PRESCRIPTIONS</h6>
-                    <table className="table table-bordered table-striped shadow">
+                    <table className="table table-striped shadow" style={{borderRadius:'0.75rem', overflow:'hidden'}}>
                         <thead>
-                            <tr>
-                                <th className='col-2 text-center'>Date / Prescription ID</th>
-                                <th className='text-center'>From Physician</th>
-                                <th className='text-center'>Assigned Pharmacy</th>
-                                <th className='col-2 text-center'>Status</th>
-                                <th className='col-2 text-center'>Action</th>    
+                            <tr className='text-center'>
+                                <th className='col-2'>Date / Prescription ID</th>
+                                <th className='col-3 border-start'>From Physician</th>
+                                <th className='col-3 border-start'>Assigned Pharmacy</th>
+                                <th className='col-3 border-start'>Current Status</th>
+                                <th className='col-1 border-start'>Action</th>    
                             </tr>
                         </thead>
                         <tbody>
                             {prescriptions.length > 0 ? (
                                 prescriptions.map((prescription,index)=>(
-                                    <tr key={index} style={{verticalAlign:'middle'}}>
-                                        <td className='text-center'>
+                                    <tr key={index} className='text-center' style={{verticalAlign:'middle'}}>
+                                        <td className='p-1'>
                                             <div className=''>{formatDate(prescription.date)}</div>
                                             <QRCodeSVG value={prescription.id.toString()} size={80} />
                                             <div className='mt-1' style={{ fontSize: 8 }}>{prescription.id}</div>
                                         </td>
-                                        <td className='text-center'>
+                                        <td className='border-start'>
                                             <div className="vstack ps-3">
                                                 <div className=''>{prescription.physicianName}</div>
                                                 <div>{prescription.physicianNZMC}</div>
                                                 <div style={{fontSize:14}}>Phone: {prescription.physicianContactNo}</div>
                                             </div>
                                         </td>
-                                        <td className='text-center'>
+                                        <td className='border-start'>
                                             {!prescription.pharmacyName ? (
                                                 <div >No Pharmacy Assigned</div>
                                             ):(
@@ -180,9 +190,13 @@ const PatientHome = () => {
                                                 </div>
                                             )}
                                         </td>
-                                        <td className='text-center'>{statusDescriptions[prescription.status]}</td>
-                                        <td className='text-center'>
-                                        <Link className="btn btn-sm btn-info"
+                                        <td className='border-start' >
+                                            <div className='p-2 rounded' style={{background: statusColors[prescription.status]}}>
+                                                {statusDescriptions[prescription.status]}
+                                            </div>
+                                        </td>
+                                        <td className='border-start'>
+                                            <Link className="btn btn-sm btn-info buttonWidth"
                                                 to={`/access-prescription/${prescription.id}`}
                                             >
                                                 <i className="bi bi-prescription" style={{fontSize:24}}></i>

@@ -17,6 +17,16 @@ const statusDescriptions = [
     "Reassigned"
 ];
 
+const statusColors = [
+    "#D3D3D3", // Light Gray
+    "#ADD8E6", // Light Blue
+    "#FFDAB9", // Light Orange
+    "#90EE90", // Light Green
+    "#D8BFD8", // Light Purple
+    "#F08080", // Light Coral
+    "#FFFFE0" // Light Yellow
+];
+
 const PhysicianHome = () => {
     const [state, setState] = useState({
         prescriptions: [],
@@ -24,9 +34,7 @@ const PhysicianHome = () => {
         error: null,
         web3: null,
         currentUser: '',
-        contracts: null,
-        selectedPrescriptionID: null,
-        assignmentSuccess: false,
+        contracts: null
     });
 
     const closeButtonRef = useRef(null);
@@ -138,16 +146,7 @@ const PhysicianHome = () => {
 
     const formatDate = (timestamp) => new Date(timestamp).toISOString().split('T')[0];
 
-    const handleAssign = (prescriptionID) => setState(prevState => ({ ...prevState, selectedPrescriptionID: prescriptionID }));
-
-    const handleAssignmentSuccess = () => {
-        setState(prevState => ({ ...prevState, assignmentSuccess: true }));
-        if (closeButtonRef.current) {
-            closeButtonRef.current.click();
-        }
-    };
-
-    const { prescriptions, loading, error, selectedPrescriptionID } = state;
+    const { prescriptions, loading, error } = state;
 
     return (
         <div className="container bgcolor2 p-3">
@@ -157,36 +156,38 @@ const PhysicianHome = () => {
             {!loading && !error && (
                 <div>
                     <h6 className=''>MY ACTIVE PRESCRIPTIONS</h6>
-                    <table className="table table-bordered table-striped shadow">
+                    <table className="table table-striped shadow" style={{borderRadius:'0.75rem', overflow:'hidden'}}>
                         <thead>
-                            <tr>
-                                <th className='col-2 text-center'>Date / Prescription ID</th>                            
-                                <th className='text-center'>Patient</th>
-                                <th className='col-2 text-center'>Status</th>
-                                <th className='text-center'>Assigned Pharmacy</th>
-                                <th className='col-2 text-center'>Action</th>
+                            <tr className='text-center'>
+                                <th className='col-2'>Date / Prescription ID</th>                            
+                                <th className='border-start col-3'>Patient</th>
+                                <th className='col-3 border-start'>Status</th>
+                                <th className='border-start'>Assigned Pharmacy</th>
+                                <th className='col-1 border-start'>Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             {prescriptions.length > 0 ? (
                                 prescriptions.map((prescription, index) => (
-                                    <tr key={index} style={{verticalAlign:'middle'}}>
-                                        <td className='text-center'>
+                                    <tr key={index} className='text-center' style={{verticalAlign:'middle'}}>
+                                        <td className='p-1'>
                                             <div className=''>{formatDate(prescription.date)}</div>
                                             <QRCodeSVG value={prescription.id.toString()} size={80} />
                                             <div className='mt-1' style={{ fontSize: 8 }}>{prescription.id}</div>
                                         </td>
-                                        <td className='text-center'>
+                                        <td className='border-start'>
                                             <div className="vstack">
                                                 <div className='m-0 p-0'>{prescription.patientName}</div>
                                                 <div>{prescription.patientNHI}</div>
                                                 <div style={{ fontSize: 10 }}>{prescription.patientAddress}</div>
                                             </div>
                                         </td>
-                                        <td className='text-center' style={{ fontSize: 14 }}>
-                                            {statusDescriptions[prescription.status]}
+                                        <td className='border-start' >
+                                            <div className='p-2 rounded' style={{background: statusColors[prescription.status]}} >
+                                                {statusDescriptions[prescription.status]}
+                                            </div>
                                         </td>
-                                        <td className='text-center'>
+                                        <td className='border-start'>
                                             {!prescription.pharmacyName ? (
                                                 <div className="">No Pharmacy Assigned</div>
                                             ) : (
@@ -197,8 +198,8 @@ const PhysicianHome = () => {
                                                 </div>
                                             )}
                                         </td>
-                                        <td className='text-center'>
-                                            <Link className="btn btn-sm btn-info"
+                                        <td className='border-start'>
+                                            <Link className="btn btn-sm btn-info buttonWidth"
                                                 to={`/access-prescription/${prescription.id}`}
                                             >
                                                 <i className="bi bi-prescription" style={{fontSize:24}}></i>

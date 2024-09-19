@@ -44,7 +44,6 @@ const PrescriptionForm = () => {
             if (role === 'Patient') {
                 setIsPatientRegistered(true);
                 setPatientAttributes(attributes);
-                console.log(patientAttributes);
             } else {
                 setIsPatientRegistered(false);
                 setPatientAttributes({});

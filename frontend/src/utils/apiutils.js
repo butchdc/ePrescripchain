@@ -207,18 +207,18 @@ export const updateStatusToDB = async (prescriptionID, newStatus) => {
 
 };
 
+const statusDescriptions = [
+    { status: "Awaiting Pharmacy Assignment", note: "Your prescription has been created and is waiting to be assigned to a pharmacy." },
+    { status: "Awaiting For Confirmation", note: "Your prescription has been assigned to a pharmacy and is awaiting confirmation." },
+    { status: "Preparing", note: "The pharmacy has confirmed your prescription and the items are now being prepared." },
+    { status: "Ready For Collection", note: "The items are ready for collection. You can pick them up from the pharmacy." },
+    { status: "Collected", note: "The items have been collected. Contact the pharmacy if you need further assistance." },
+    { status: "Cancelled", note: "Your prescription has been cancelled by the physician. If you have questions, please contact the physician’s office." },
+    { status: "Reassigned", note: "Your prescription is being reassigned to your physician for further review. Please contact your physician for any updates or additional assistance." }
+];
 
 
 export const saveStatusTimestampToDB = async (prescriptionID, status, timestamp) => {
-    const statusDescriptions = [
-        { status: "Awaiting Pharmacy Assignment", note: "Your prescription has been created and is waiting to be assigned to a pharmacy." },
-        { status: "Awaiting For Confirmation", note: "Your prescription has been assigned to a pharmacy and is awaiting confirmation." },
-        { status: "Preparing", note: "Your prescription has been confirmed by the pharmacy and is now being prepared." },
-        { status: "Ready For Collection", note: "Your prescription is ready for collection. You can pick it up from the pharmacy." },
-        { status: "Collected", note: "Your prescription has been collected. Contact the pharmacy if you need further assistance." },
-        { status: "Cancelled", note: "Your prescription has been cancelled by the physician. If you have questions, please contact the physician’s office." },
-        { status: "Reassigned", note: "Your prescription is being reassigned to your physician for further review. Please contact your physician for any updates or additional assistance." }
-    ];
 
     const getStatusNote = (status) => {
         const statusDescription = statusDescriptions.find(desc => desc.status === status);
