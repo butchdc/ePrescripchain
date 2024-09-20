@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import useUserRole from '../hooks/useuserrole';
+import { useState, useEffect } from 'react';
 import { getUserRoleAndAttributes } from '../utils/userqueryutils';
 
 const QueryPage = () => {
@@ -8,8 +7,25 @@ const QueryPage = () => {
     const [attributes, setAttributes] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [userRole, setUserRole] = useState(null);
+    const [roleLoading, setRoleLoading] = useState(true);
+    const [roleError, setRoleError] = useState(null);
 
-    const { role: userRole, loading: roleLoading, error: roleError } = useUserRole();
+    useEffect(() => {
+        const fetchUserRole = async () => {
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                const { role } = await getUserRoleAndAttributes(accounts[0]);
+                setUserRole(role);
+            } catch (err) {
+                setRoleError(err.message);
+            } finally {
+                setRoleLoading(false);
+            }
+        };
+
+        fetchUserRole();
+    }, []);
 
     const handleChange = (e) => {
         setAddress(e.target.value);

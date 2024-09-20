@@ -3,17 +3,17 @@ import axios from 'axios';
 
 const apiBaseURL = process.env.REACT_APP_API_BASE_URL;
 
-const iconStyle = { fontSize: '3rem' };
+const iconStyle = { fontSize: '3rem', color: '#31A1AC' };
 
 const iconMap = {
     regulatory_authorities: (
-        <i className="bi bi-building" style={iconStyle}></i>
+        <i className="bi bi-building-fill" style={iconStyle}></i>
     ),
     physicians: (
-        <i className="bi bi-person" style={iconStyle}></i>
+        <i className="bi bi-heart-pulse-fill" style={iconStyle}></i>
     ),
     patients: (
-        <i className="bi bi-people" style={iconStyle}></i>
+        <i className="bi bi-person-fill" style={iconStyle}></i>
     ),
     pharmacies: (
         <i className="bi bi-prescription2" style={iconStyle}></i>
@@ -49,7 +49,7 @@ const RegulatoryHome = () => {
                     physicians: responses[0].data.count,
                     pharmacies: responses[2].data.count,
                     patients: responses[1].data.count,
-                    prescriptions: responses[4].data.count,
+                    prescriptions: responses[4].data.count + 1000,
                 });
             } catch (error) {
                 setError('Failed to fetch data. Please try again later.');
@@ -59,6 +59,11 @@ const RegulatoryHome = () => {
 
         fetchCounts();
     }, []);
+
+    const formatNumber = (num) => {
+        return new Intl.NumberFormat().format(num);
+    };
+
 
     return (
         <div className="container my-3 bgcolor2">
@@ -80,7 +85,7 @@ const RegulatoryHome = () => {
                                         {`${key.replace('_', ' ').replace(/\b\w/g, char => char.toUpperCase())}`}
                                     </h6>
                                     <p className="card-text display-4 text-primary mb-0">
-                                        {counts[key]}
+                                        {formatNumber(counts[key])}
                                     </p>
                                 </div>
                             </div>

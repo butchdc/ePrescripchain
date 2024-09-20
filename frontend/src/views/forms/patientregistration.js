@@ -31,9 +31,9 @@ const PatientRegistration = () => {
         setSuccess(null);
 
         try {
-            const { address, name, patientAddress, gender, dateOfBirth, nhiNumber } = formState;
+            const { address, name, patientAddress, contactNumber, gender, dateOfBirth, nhiNumber } = formState;
 
-            if (!address || !name || !patientAddress || !gender || !dateOfBirth || !nhiNumber) {
+            if (!address || !name || !patientAddress || !contactNumber || !gender || !dateOfBirth || !nhiNumber) {
                 throw new Error('All fields are required');
             }
 
@@ -44,7 +44,7 @@ const PatientRegistration = () => {
             }
 
             const role = 'Patient';
-            const data = { address, role, name, patientAddress, gender, dateOfBirth, nhiNumber };
+            const data = { address, role, name, patientAddress, contactNumber, gender, dateOfBirth, nhiNumber };
             const ipfsHash = await uploadToIPFS(data);
 
             const web3 = await initWeb3();
@@ -66,6 +66,7 @@ const PatientRegistration = () => {
                 address: '',
                 name: '',
                 patientAddress: '',
+                contactNumber: '',
                 gender: '',
                 dateOfBirth: '',
                 nhiNumber: '',
@@ -87,11 +88,12 @@ const PatientRegistration = () => {
             const rows = text.split('\n').map(row => row.split(';'));
 
             if (rows.length > 0) {
-                const [address, name, patientAddress, gender, dateOfBirth, nhiNumber] = rows[0];
+                const [address, name, patientAddress, contactNumber, gender, dateOfBirth, nhiNumber] = rows[0];
                 setFormState({
                     address: address || '',
                     name: name || '',
                     patientAddress: patientAddress || '',
+                    contactNumber: contactNumber || '',
                     gender: gender || '',
                     dateOfBirth: dateOfBirth || '',
                     nhiNumber: nhiNumber || '',
@@ -148,6 +150,19 @@ const PatientRegistration = () => {
                         autoComplete='off'
                     />
                     <label htmlFor="patientAddress">Address</label>
+                </div>
+                <div className="form-floating mb-3">
+                    <input
+                        type="text"
+                        id="contactNumber"
+                        name="contactNumber"
+                        className="form-control"
+                        value={formState.contactNumber}
+                        onChange={handleChange}
+                        placeholder="Contact Number"
+                        autoComplete='off'
+                    />
+                    <label htmlFor="patientAddress">Contact Number</label>
                 </div>
                 <div className="form-floating mb-3">
                     <select

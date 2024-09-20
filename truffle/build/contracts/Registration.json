@@ -11126,14 +11126,128 @@
   },
   "networks": {
     "5777": {
-      "events": {},
+      "events": {
+        "0x8ffcdc15a283d706d38281f500270d8b5a656918f555de0913d7455e3e6bc1bf": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "internalType": "address",
+              "name": "administrator",
+              "type": "address"
+            }
+          ],
+          "name": "ContractDeployed",
+          "type": "event"
+        },
+        "0xd56ca6eba2063df9c582989c86b1caa15d2794eb6a0026735173991661816cd0": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "regulatory_authority",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "patient",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "string",
+              "name": "ipfsHash",
+              "type": "string"
+            }
+          ],
+          "name": "PatientRegistered",
+          "type": "event"
+        },
+        "0x41d38284bb430ad2a7103a3ff5d9cb8b4e57b5e3feed6b8a52880cce609a47c1": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "regulatory_authority",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "pharmacy",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "string",
+              "name": "ipfsHash",
+              "type": "string"
+            }
+          ],
+          "name": "PharmacyRegistered",
+          "type": "event"
+        },
+        "0x1d103a0b744a55faccce85656057d5af451eb8db85891aa07fa6a42054a11dfb": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "regulatory_authority",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "physician",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "string",
+              "name": "ipfsHash",
+              "type": "string"
+            }
+          ],
+          "name": "PhysicianRegistered",
+          "type": "event"
+        },
+        "0x2a26528042915053d3c81c3c4360977cadaaee795cf4619b51b5684b5f9a7814": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "administrator",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "regulatory_authority",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "string",
+              "name": "ipfsHash",
+              "type": "string"
+            }
+          ],
+          "name": "RegulatoryAuthorityRegistered",
+          "type": "event"
+        }
+      },
       "links": {},
-      "address": "0x9CDc5330C1d27bc2f5145487678b7a5b9205Fa71",
-      "transactionHash": "0x73378ff502aafab426431c9fbcc2c72f11caaf031b914c111380c2ce7bd87459"
+      "address": "0x85383cae6e2eE00f2e7619Ee4D3e3a37272Ab4A4",
+      "transactionHash": "0x6fb80e3508908f043cca93415960dc157359bd083fc4cdcc5947b515f2984572"
     }
   },
   "schemaVersion": "3.4.16",
-  "updatedAt": "2024-09-16T01:43:28.542Z",
+  "updatedAt": "2024-09-20T11:05:22.210Z",
   "networkType": "ethereum",
   "devdoc": {
     "kind": "dev",

@@ -173,6 +173,7 @@ const Sample = () => {
             <th>Account</th>
             <th>Name</th>
             <th>Address</th>
+            <th>Contact Number</th> {/* Added Contact Number column */}
             <th>Gender</th>
             <th>Date of Birth</th>
             <th>NHI No</th>
@@ -184,6 +185,7 @@ const Sample = () => {
             <td>{getAccount(3)}</td>
             <td>Jane Doe</td>
             <td>101 Victoria Street West, Auckland 1010</td>
+            <td>(09) 1234 5678</td> 
             <td>Female</td>
             <td>{formatDate('1985-03-12')}</td>
             <td>NHI123456</td>
@@ -192,6 +194,7 @@ const Sample = () => {
                 getAccount(3),
                 'Jane Doe',
                 '101 Victoria Street West, Auckland 1010',
+                '(09) 1234 5678', 
                 'Female',
                 formatDate('1985-03-12'),
                 'NHI123456'
@@ -202,6 +205,7 @@ const Sample = () => {
             <td>{getAccount(4)}</td>
             <td>Robert Brown</td>
             <td>202 Ponsonby Road, Ponsonby, Auckland 1011</td>
+            <td>(03) 2345 6789</td> 
             <td>Male</td>
             <td>{formatDate('1978-07-22')}</td>
             <td>NHI654321</td>
@@ -210,6 +214,7 @@ const Sample = () => {
                 getAccount(4),
                 'Robert Brown',
                 '202 Ponsonby Road, Ponsonby, Auckland 1011',
+                '(03) 2345 6789', 
                 'Male',
                 formatDate('1978-07-22'),
                 'NHI654321'
@@ -298,6 +303,81 @@ const Sample = () => {
           </tr>
         </tbody>
       </table>
+
+      <h5 className="mb-1">Sample Drugs</h5>
+      <table className='table table-sm table-striped table-bordered'>
+        <thead>
+            <tr>
+                <th>Drug Name</th>
+                <th>Sig</th>
+                <th>Mitte</th>
+                <th>Repeat</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Amoxicillin</td>
+                <td>Take 500 mg every 8 hours</td>
+                <td>30 capsules</td>
+                <td>3</td>
+            </tr>
+            <tr>
+                <td>Lisinopril</td>
+                <td>Take 10 mg once daily</td>
+                <td>30 tablets</td>
+                <td>2</td>
+            </tr>
+            <tr>
+                <td>Metformin</td>
+                <td>Take 500 mg twice daily</td>
+                <td>60 tablets</td>
+                <td>2</td>
+            </tr>
+            <tr>
+                <td>Simvastatin</td>
+                <td>Take 20 mg at bedtime</td>
+                <td>30 tablets</td>
+                <td>1</td>
+            </tr>
+            <tr>
+                <td>Sertraline</td>
+                <td>Take 50 mg once daily</td>
+                <td>30 tablets</td>
+                <td>1</td>
+            </tr>
+            <tr>
+                <td>Omeprazole</td>
+                <td>Take 20 mg before meals</td>
+                <td>30 capsules</td>
+                <td>2</td>
+            </tr>
+            <tr>
+                <td>Hydrochlorothiazide</td>
+                <td>Take 25 mg once daily</td>
+                <td>30 tablets</td>
+                <td>1</td>
+            </tr>
+            <tr>
+                <td>Atorvastatin</td>
+                <td>Take 40 mg at bedtime</td>
+                <td>30 tablets</td>
+                <td>1</td>
+            </tr>
+            <tr>
+                <td>Fluoxetine</td>
+                <td>Take 20 mg once daily</td>
+                <td>30 capsules</td>
+                <td>1</td>
+            </tr>
+            <tr>
+                <td>Gabapentin</td>
+                <td>Take 300 mg three times daily</td>
+                <td>90 capsules</td>
+                <td>1</td>
+            </tr>
+        </tbody>
+      </table>
+
 
       <div className="mt-3">
         <h5>Copied Data</h5>

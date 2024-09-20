@@ -26,7 +26,7 @@ contract Prescription {
     enum PrescriptionStatus { AwaitingPharmacyAssignment, AwaitingForConfirmation, Preparing, ReadyForCollection, Collected, Cancelled, Reassigned }
 
     // Events
-    event PharmacySelected(address indexed _pharmacy);
+    event PharmacySelected(string prescriptionID, address indexed _pharmacy);
     event PrescriptionCreated(
         string prescriptionID, 
         address indexed physician,
@@ -38,7 +38,6 @@ contract Prescription {
     event MedicationIsPrepared(string prescriptionID, address _pharmacy, address patient); 
     event MedicationIsCollected(string prescriptionID, address patient); 
     event PrescriptionCancelled(string prescriptionID, address patient); 
-    event PrescriptionStatusUpdated(string prescriptionID, PrescriptionStatus newStatus); 
 
     // Modifiers
     modifier onlyPhysician() {
@@ -120,36 +119,29 @@ contract Prescription {
         PrescriptionDetail storage detail = prescriptions[_prescriptionID];
         require(detail.patient != address(0), "Prescription does not exist");
 
-        // Check if the prescription is already assigned to a pharmacy
         address currentPharmacy = prescriptionToPharmacy[_prescriptionID];
         
         if (currentPharmacy != address(0)) {
-            // If there is a current pharmacy, and it has not accepted the prescription
             bool wasAccepted = detail.status == PrescriptionStatus.Preparing || 
-                            detail.status == PrescriptionStatus.ReadyForCollection ||
-                            detail.status == PrescriptionStatus.Collected || 
-                            detail.status == PrescriptionStatus.Cancelled;
+                              detail.status == PrescriptionStatus.ReadyForCollection ||
+                              detail.status == PrescriptionStatus.Collected || 
+                              detail.status == PrescriptionStatus.Cancelled;
 
             if (!wasAccepted) {
-                // Remove the old pharmacy's selection
                 hasPharmacySelected[_prescriptionID][currentPharmacy] = false;
-                emit PharmacySelected(currentPharmacy); // Optionally emit event for the old pharmacy removal
+                emit PharmacySelected(_prescriptionID, currentPharmacy);
             }
         }
 
-        // Check if the new pharmacy was already selected
         require(!hasPharmacySelected[_prescriptionID][_pharmacyAddress], "This pharmacy has already been selected for this prescription");
 
-        // Set the new pharmacy and update the prescription status
         hasPharmacySelected[_prescriptionID][_pharmacyAddress] = true;
         prescriptionToPharmacy[_prescriptionID] = _pharmacyAddress;
 
         detail.status = PrescriptionStatus.AwaitingForConfirmation;
 
-        emit PharmacySelected(_pharmacyAddress);
-        emit PrescriptionStatusUpdated(_prescriptionID, detail.status);
+        emit PharmacySelected(_prescriptionID, _pharmacyAddress);
     }
-
 
     function acceptPrescription(string memory _prescriptionID) public onlyRegisteredPharmacies {
         PrescriptionDetail storage detail = prescriptions[_prescriptionID];
@@ -160,7 +152,6 @@ contract Prescription {
         detail.status = PrescriptionStatus.Preparing;
 
         emit PrescriptionAccepted(_prescriptionID, msg.sender);
-        emit PrescriptionStatusUpdated(_prescriptionID, detail.status);
     }
 
     function rejectPrescription(string memory _prescriptionID) public onlyRegisteredPharmacies {
@@ -174,7 +165,6 @@ contract Prescription {
         hasPharmacySelected[_prescriptionID][msg.sender] = false;
 
         emit PrescriptionRejected(_prescriptionID, msg.sender);
-        emit PrescriptionStatusUpdated(_prescriptionID, detail.status);
     }
 
     function medicationPreparation(string memory _prescriptionID) public onlyRegisteredPharmacies {
@@ -186,7 +176,6 @@ contract Prescription {
         detail.status = PrescriptionStatus.ReadyForCollection;
 
         emit MedicationIsPrepared(_prescriptionID, msg.sender, detail.patient);
-        emit PrescriptionStatusUpdated(_prescriptionID, detail.status);
     }
 
     function medicationCollection(string memory _prescriptionID) public onlyRegisteredPharmacies {
@@ -198,7 +187,6 @@ contract Prescription {
         detail.status = PrescriptionStatus.Collected;
 
         emit MedicationIsCollected(_prescriptionID, detail.patient);
-        emit PrescriptionStatusUpdated(_prescriptionID, detail.status);
     }
 
     function cancelPrescription(string memory _prescriptionID) public onlyCreator(_prescriptionID) {
@@ -208,7 +196,6 @@ contract Prescription {
 
         detail.status = PrescriptionStatus.Cancelled;
         emit PrescriptionCancelled(_prescriptionID, detail.patient);
-        emit PrescriptionStatusUpdated(_prescriptionID, detail.status);
     }
 
     function getAssignedPharmacy(string memory _prescriptionID) public view onlyAuthorized(_prescriptionID) returns (address) {

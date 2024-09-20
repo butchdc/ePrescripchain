@@ -275,9 +275,9 @@ const AccessPrescription = () => {
                                                 {prescriptionDetails.patient ? (
                                                     <div>
                                                         <div>{prescriptionDetails.patient.name}</div>
-                                                        <div>{prescriptionDetails.patient.patientAddress}</div>
-                                                        <div>DOB: {prescriptionDetails.patient.dateOfBirth}</div>
+                                                        <div style={{fontSize: 14}}>{prescriptionDetails.patient.patientAddress}</div>
                                                         <div>NHI: {prescriptionDetails.patient.nhiNumber}</div>
+                                                        <div>Phone: {prescriptionDetails.patient.contactNumber}</div>                                                        
                                                         <div style={{ fontSize: 10 }}>{prescriptionDetails.patient.address}</div>
                                                     </div>
                                                 ) : (

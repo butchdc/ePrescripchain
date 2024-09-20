@@ -155,7 +155,7 @@ const Navbar = () => {
                         </>
                     )}
                     <li className="nav-item">
-                        <Link className="nav-link" to="/info">About</Link>
+                        <Link className="nav-link" to="/about">About</Link>
                     </li>
                 </ul>
                 {role != 'Account is not Registered!' ? 
