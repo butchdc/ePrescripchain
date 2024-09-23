@@ -9,13 +9,13 @@ import {QRCodeSVG} from 'qrcode.react';
 const apiBaseURL = process.env.REACT_APP_API_BASE_URL;
 
 const statusDescriptions = [
-    "Awaiting Pharmacy Assignment",
-    "Awaiting For Confirmation",
-    "Preparing",
-    "Ready For Collection",
-    "Collected",
-    "Cancelled",
-    "Reassigned"
+    <><i className='bi bi-clock h5'></i> Awaiting Pharmacy Assignment</>,
+    <><i className='bi bi-question-circle h5'></i> Awaiting For Confirmation</>,
+    <><i className='bi bi-hourglass-split h5'></i> Preparing</>,
+    <><i className='bi bi-check-circle h5'></i> Ready For Collection</>,
+    <><i className='bi bi-basket h5'></i> Collected</>,
+    <><i className='bi bi-x-circle h5'></i> "Cancelled"</>,
+    <><i className='bi bi-arrow-repeat h5'></i> Reassigned</>
 ];
 
 const statusColors = [
@@ -89,6 +89,8 @@ const Home = () => {
                 
                 const params = {
                     status: 'In-Progress',
+                    sortColumn: 'date',
+                    sortOrder: 'DESC',
                     ...roleParamsMap[role] 
                 };
                 
@@ -182,7 +184,7 @@ const Home = () => {
                                                 <div className="vstack">
                                                     <div className='m-0 p-0'>{prescription.patientData.name}</div>
                                                     <div>{prescription.patientData.nhiNumber}</div>
-                                                    <div>{prescription.patientData.contactNumber}</div>
+                                                    <div style={{fontSize:14}}>Phone: {prescription.patientData.contactNumber}</div>
                                                     {/* <div style={{ fontSize: 10 }}>{prescription.patientData.address}</div> */}
                                                 </div>
                                             </td>
@@ -199,7 +201,7 @@ const Home = () => {
                                         {role != 'Pharmacy' &&
                                             <td className='border-start'>
                                                 {!prescription.pharmacyData ? (
-                                                    <div className="">No Pharmacy Assigned</div>
+                                                    <div className="text-primary">No Pharmacy Assigned</div>
                                                 ) : (
                                                     <div className="vstack">
                                                         <div className='m-0 p-0'>{prescription.pharmacyData.pharmacyName}</div>

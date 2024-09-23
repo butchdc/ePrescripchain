@@ -8,13 +8,13 @@ import { useParams } from 'react-router-dom'
 import TimeLine from '../timeline';
 
 const statusDescriptions = [
-    "Awaiting Pharmacy Assignment",
-    "Awaiting For Confirmation",
-    "Preparing",
-    "Ready For Collection",
-    "Collected",
-    "Cancelled",
-    "Reassigned"
+    <><i className='bi bi-clock'></i> Awaiting Pharmacy Assignment</>,
+    <><i className='bi bi-question-circle'></i> Awaiting For Confirmation</>,
+    <><i className='bi bi-hourglass-split'></i> Preparing</>,
+    <><i className='bi bi-check-circle'></i> Ready For Collection</>,
+    <><i className='bi bi-basket'></i> Collected</>,
+    <><i className='bi bi-x-circle'></i> "Cancelled"</>,
+    <><i className='bi bi-arrow-repeat'></i> Reassigned</>
 ];
 
 const statusColors = [
@@ -223,7 +223,7 @@ const AccessPrescription = () => {
                                                 <div style={{fontSize:12}}>Accept</div>
                                             </button>
                                             <button className="btn btn-sm btn-warning buttonWidth" onClick={() => handleAction('rejectPrescription')}>
-                                                <i className='bi bi-reply-fill' style={{fontSize:28}} ></i>
+                                                <i className='bi bi-arrow-repeat' style={{fontSize:28}} ></i>
                                                 <div style={{fontSize:12}}>Return</div>
                                             </button>
                                         </div>
