@@ -12,8 +12,8 @@ const statusDescriptions = [
     <><i className='bi bi-question-circle'></i> Awaiting For Confirmation</>,
     <><i className='bi bi-hourglass-split'></i> Preparing</>,
     <><i className='bi bi-check-circle'></i> Ready For Collection</>,
-    <><i className='bi bi-basket'></i> Collected</>,
-    <><i className='bi bi-x-circle'></i> "Cancelled"</>,
+    <span className= 'text-white' ><i className='bi bi-basket h5'></i> Collected</span>,
+    <><i className='bi bi-x-circle'></i> Cancelled</>,
     <><i className='bi bi-arrow-repeat'></i> Reassigned</>
 ];
 
@@ -22,7 +22,7 @@ const statusColors = [
     "#ADD8E6", // Light Blue
     "#FFDAB9", // Light Orange
     "#90EE90", // Light Green
-    "#D8BFD8", // Light Purple
+    "#388E3C", // Light Purple
     "#F08080", // Light Coral
     "#FFFFE0" // Light Yellow
 ];
@@ -304,7 +304,7 @@ const AccessPrescription = () => {
                                                 ) : (
                                                     <div className="text-center">
                                                         <div className='mb-2'>No Pharmacy Assigned</div>
-                                                        {role==='Physician' && 
+                                                        {role==='Physician' && prescriptionDetails.status != 5n &&
                                                         <button
                                                             className="btn btn-sm btn-warning"
                                                             data-bs-toggle="modal"

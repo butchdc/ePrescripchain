@@ -45,11 +45,11 @@ const RegulatoryHome = () => {
                 ]);
 
                 setCounts({
-                    regulatory_authorities: responses[3].data.count + 10,
-                    physicians: responses[0].data.count + 1000,
-                    pharmacies: responses[2].data.count + 2000,
-                    patients: responses[1].data.count + 2000000,
-                    prescriptions: responses[4].data.count + 100000,
+                    regulatory_authorities: responses[3].data.count,
+                    physicians: responses[0].data.count,
+                    pharmacies: responses[2].data.count,
+                    patients: responses[1].data.count,
+                    prescriptions: responses[4].data.count,
                 });
             } catch (error) {
                 setError('Failed to fetch data. Please try again later.');

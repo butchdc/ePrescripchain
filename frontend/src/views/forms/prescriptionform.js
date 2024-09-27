@@ -80,7 +80,6 @@ const PrescriptionForm = () => {
             }
 
             const prescriptionID = uuidv4().replace(/-/g, '');
-            //const prescriptionID = uuidv4();
 
             const dataToUpload = prepareDataForIPFS(prescriptionID);
             const ipfsHash = await uploadToIPFS(dataToUpload);

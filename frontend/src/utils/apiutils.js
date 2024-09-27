@@ -227,7 +227,7 @@ export const saveStatusTimestampToDB = async (prescriptionID, status, timestamp)
 
     try {
         // Prompt user for additional notes
-        const userNotes = prompt("Enter additional notes (optional):", "");
+        const userNotes = status === 'Reassigned' ? prompt("Enter additional notes (optional):", "") : null;
         // Use user input or default note
         const finalNotes = userNotes !== null ? userNotes !== '' ? userNotes : getStatusNote(status):getStatusNote(status);
 

@@ -215,6 +215,54 @@ router.get('/status-timestamps/:prescriptionID', (req, res) => {
   });
 });
 
+// Route to get past prescriptions with pagination and filtering
+router.get('/past', (req, res) => {
+  const { address, createdBy, assignedTo, limit = 5, offset = 0, sortColumn, sortOrder } = req.query;
+
+  console.log(`[${getCurrentTimestamp()}] GET request received for past prescriptions with createdBy: ${createdBy}, assignedTo: ${assignedTo}, limit: ${limit}, offset: ${offset}`);
+
+  // Ensure at least one of the parameters is provided
+  if (!address && !createdBy && !assignedTo) {
+      return res.status(400).json({ error: 'At least one of address, createdBy, or assignedTo is required.' });
+  }
+
+  // Base query with status condition
+  let query = 'SELECT * FROM prescriptions WHERE status != "In-Progress"';
+  const params = [];
+
+  // Add conditions dynamically
+  if (address) {
+      query += ' AND address COLLATE NOCASE = ?';
+      params.push(address);
+  }
+  if (createdBy) {
+      query += ' AND createdBy COLLATE NOCASE = ?';
+      params.push(createdBy);
+  }
+  if (assignedTo) {
+      query += ' AND assignedTo COLLATE NOCASE = ?';
+      params.push(assignedTo);
+  }
+
+  // Append sorting
+  const sort = sortColumn ? `${sortColumn} ${['ASC', 'DESC'].includes(sortOrder?.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC'}` : 'date DESC';
+  query += ` ORDER BY ${sort} LIMIT ? OFFSET ?`;
+  params.push(limit, offset);
+
+  console.log(`[${getCurrentTimestamp()}] Executing query: ${query}, params: ${params}`);
+
+  db.all(query, params, (err, rows) => {
+      if (err) {
+          console.error(`[${getCurrentTimestamp()}] Error fetching past prescriptions:`, err.message);
+          return res.status(500).json({ error: 'An error occurred while fetching past prescriptions.' });
+      }
+      if (rows.length === 0) {
+          return res.json({ message: 'No past prescriptions found.' });
+      }
+      res.json(rows);
+  });
+});
+
 
 
 module.exports = router;

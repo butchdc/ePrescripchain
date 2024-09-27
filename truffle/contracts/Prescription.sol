@@ -118,6 +118,7 @@ contract Prescription {
 
         PrescriptionDetail storage detail = prescriptions[_prescriptionID];
         require(detail.patient != address(0), "Prescription does not exist");
+        require(detail.status != PrescriptionStatus.Cancelled, "Prescription is cancelled.");
 
         address currentPharmacy = prescriptionToPharmacy[_prescriptionID];
         
@@ -148,6 +149,7 @@ contract Prescription {
         require(detail.patient != address(0), "Prescription does not exist");
         require(detail.status == PrescriptionStatus.AwaitingForConfirmation, "Prescription is not in AwaitingForConfirmation status");
         require(msg.sender == prescriptionToPharmacy[_prescriptionID], "Only the assigned pharmacy can accept this prescription");
+        require(detail.status != PrescriptionStatus.Cancelled, "Prescription is cancelled.");
 
         detail.status = PrescriptionStatus.Preparing;
 
@@ -159,6 +161,7 @@ contract Prescription {
         require(detail.patient != address(0), "Prescription does not exist");
         require(detail.status == PrescriptionStatus.AwaitingForConfirmation, "Prescription is not in AwaitingForConfirmation status");
         require(msg.sender == prescriptionToPharmacy[_prescriptionID], "Only the assigned pharmacy can reject this prescription");
+        require(detail.status != PrescriptionStatus.Cancelled, "Prescription is cancelled.");
 
         detail.status = PrescriptionStatus.Reassigned;
         delete prescriptionToPharmacy[_prescriptionID];
@@ -172,6 +175,7 @@ contract Prescription {
         require(detail.patient != address(0), "Prescription does not exist");
         require(detail.status == PrescriptionStatus.Preparing, "Prescription is not in Preparing status");
         require(msg.sender == prescriptionToPharmacy[_prescriptionID], "Only the assigned pharmacy can prepare medication");
+        require(detail.status != PrescriptionStatus.Cancelled, "Prescription is cancelled.");
 
         detail.status = PrescriptionStatus.ReadyForCollection;
 
@@ -183,6 +187,7 @@ contract Prescription {
         require(detail.patient != address(0), "Prescription does not exist");
         require(detail.status == PrescriptionStatus.ReadyForCollection, "Medication is not ready for collection");
         require(msg.sender == prescriptionToPharmacy[_prescriptionID], "This pharmacy is not the selected pharmacy for this prescription");
+        require(detail.status != PrescriptionStatus.Cancelled, "Prescription is cancelled.");
 
         detail.status = PrescriptionStatus.Collected;
 
@@ -193,7 +198,8 @@ contract Prescription {
         PrescriptionDetail storage detail = prescriptions[_prescriptionID];
         require(detail.patient != address(0), "Prescription does not exist");
         require(detail.status == PrescriptionStatus.AwaitingPharmacyAssignment || detail.status == PrescriptionStatus.AwaitingForConfirmation, "Prescription cannot be cancelled");
-
+        require(detail.status != PrescriptionStatus.Cancelled, "Prescription is cancelled.");
+        
         detail.status = PrescriptionStatus.Cancelled;
         emit PrescriptionCancelled(_prescriptionID, detail.patient);
     }

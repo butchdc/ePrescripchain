@@ -1,11 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
-import {initContracts,initWeb3 } from '../../utils/web3utils';
-import { downloadFromIPFS } from '../../utils/apiutils';
+import { initWeb3, initContracts } from '../../utils/web3utils';
 import { getUserRoleAndAttributes } from '../../utils/userqueryutils';
+import { downloadFromIPFS } from '../../utils/apiutils';
 import { Link } from 'react-router-dom';
-import {QRCodeSVG} from 'qrcode.react';
-import HomeDetails from './homedetails';
 
 const apiBaseURL = process.env.REACT_APP_API_BASE_URL;
 
@@ -20,146 +18,143 @@ const statusDescriptions = [
 ];
 
 const statusColors = [
-    "#D3D3D3", // Light Gray
-    "#ADD8E6", // Light Blue
-    "#FFDAB9", // Light Orange
-    "#90EE90", // Light Green
-    "#388E3C", // Light Purple
-    "#F08080", // Light Coral
-    "#FFFFE0" // Light Yellow
+    "#D3D3D3", 
+    "#ADD8E6", 
+    "#FFDAB9", 
+    "#90EE90", 
+    "#388E3C", 
+    "#F08080", 
+    "#FFFFE0" 
 ];
 
-const iconStyle = { fontSize: '2rem', color: '#31A1AC' };
-
-const iconMap = {
-    'Physician': (
-        <i className="bi bi-heart-pulse-fill" style={iconStyle}></i>
-    ),
-    'Patient': (
-        <i className="bi bi-person-fill" style={iconStyle}></i>
-    ),
-    'Pharmacy': (
-        <i className="bi bi-prescription2" style={iconStyle}></i>
-    ),
-};
-
-const Home = () => {
+const HomeDetails = () => {
     const [prescriptions, setPrescriptions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [currentUser, setCurrentUser] = useState('');
-    const [contracts, setContracts] = useState(null);
     const [role, setRole] = useState('');
+    const [contracts, setContracts] = useState(null);
+
+    const [limit, setLimit] = useState(5);
+    const [offset, setOffset] = useState(0);
+    const [hasMore, setHasMore] = useState(false);
 
     useEffect(() => {
         const initialize = async () => {
             try {
                 const web3Instance = await initWeb3();
+                const accounts = await web3Instance.eth.getAccounts();
+                setCurrentUser(accounts[0]);
 
                 const contractsInstance = await initContracts(web3Instance);
                 setContracts(contractsInstance);
 
-                const accounts = await web3Instance.eth.getAccounts();
-                setCurrentUser(accounts[0]);
-
-                const { role: fetchedRole, attributes} = await getUserRoleAndAttributes(accounts[0]);
+                const { role: fetchedRole } = await getUserRoleAndAttributes(accounts[0]);
                 setRole(fetchedRole);
 
+                // Reset state and fetch initial prescriptions
+                if(role){
+                    await fetchPrescriptions(fetchedRole, accounts[0]);
+                    setOffset(prev => prev + limit);
+                }
+
             } catch (err) {
+                console.error('Initialization error:', err);
                 setError(err.message);
+            } finally {
                 setLoading(false);
             }
         };
 
         initialize();
-    }, []);
+    }, [role]); 
 
-    useEffect(()=>{
-        const fetchPrescriptions = async () => {
-            if (!currentUser || !contracts || !role) return;
-            setLoading(true);
+    const fetchPrescriptions = async (userRole, userAddress) => {
+        try {
+            const params = {
+                limit,
+                offset,
+                ...{
+                    'Physician': { createdBy: userAddress },
+                    'Pharmacy': { assignedTo: userAddress },
+                    'Patient': { address: userAddress }
+                }[userRole]
+            };
 
-            try{
-                let response = null;
+            console.log(`Fetching from: ${apiBaseURL}prescriptions/past with params:`, params);
+            const response = await axios.get(`${apiBaseURL}prescriptions/past`, { params });
 
-                const roleParamsMap = {
-                    'Physician': { createdBy: currentUser },
-                    'Pharmacy': { assignedTo: currentUser },
-                    'Patient': { address: currentUser }
-                };
-                
-                const params = {
-                    status: 'In-Progress',
-                    sortColumn: 'date',
-                    sortOrder: 'DESC',
-                    ...roleParamsMap[role] 
-                };
-                
-                response = await axios.get(`${apiBaseURL}prescriptions`, { params });
-
-                if (response.data.message) {
-                    setLoading(false);
-                    setError(null);
-                    setPrescriptions([]);
-                    return;
-                }
-
-                const prescriptionsData = await Promise.all(
-                    response.data.map( async (prescription)=>{
-                        try{
-                            const patientAddress = prescription.address;
-                            const physicianAddress = prescription.createdBy;
-                            const pharmacyAddress = prescription.assignedTo ? prescription.assignedTo : null;
-
-                            const patientIPFSHash = await contracts.registrationContract.methods.getPatientIPFSHash(patientAddress).call();
-                            const patientData = await downloadFromIPFS(patientIPFSHash);
-
-                            const physicianIPFSHash = await contracts.registrationContract.methods.getPhysicianIPFSHash(physicianAddress).call();
-                            const physicianData = await downloadFromIPFS(physicianIPFSHash);
-
-                            const pharmacyData = pharmacyAddress ? await downloadFromIPFS(await contracts.registrationContract.methods.getPharmacyIPFSHash(pharmacyAddress).call()) : null;
-
-                            const prescriptionData = await contracts.prescriptionContract.methods.accessPrescription(prescription.prescriptionID).call({ from: currentUser });
-                            
-                            return {
-                                prescriptionData: prescription,
-                                patientData,
-                                physicianData,
-                                pharmacyData,
-                                status: prescriptionData[2],
-                            }
-
-                        }catch(err){
-                            console.error(`Failed to fetch data for patient ${prescription.address}:`, err);
-                            return null;
-                        }
-                    })
-                );
-
-                setPrescriptions(prescriptionsData.filter(data => data !== null));
-                setError(null);
-                setLoading(false);
-                console.log(prescriptionsData.filter(data => data !== null));
-
-            }catch(err){
-                setError(err.message);
-                setPrescriptions([]);
-                setLoading(false);
+            if (response.data.message === "No past prescriptions found.") {
+                setHasMore(false);
+                return;
             }
-        };
-        fetchPrescriptions();
-    },[role, currentUser, contracts, ]);
+    
+            const prescriptionsData = await Promise.all(
+                response.data.map(async (prescription) => {
+                    try {
+                        const patientAddress = prescription.address;
+                        const physicianAddress = prescription.createdBy;
+                        const pharmacyAddress = prescription.assignedTo ? prescription.assignedTo : null;
+
+                        const patientIPFSHash = await contracts.registrationContract.methods.getPatientIPFSHash(patientAddress).call();
+                        const patientData = await downloadFromIPFS(patientIPFSHash);
+
+                        const physicianIPFSHash = await contracts.registrationContract.methods.getPhysicianIPFSHash(physicianAddress).call();
+                        const physicianData = await downloadFromIPFS(physicianIPFSHash);
+
+                        const pharmacyData = pharmacyAddress 
+                            ? await downloadFromIPFS(await contracts.registrationContract.methods.getPharmacyIPFSHash(pharmacyAddress).call()) 
+                            : null;
+
+                        const prescriptionData = await contracts.prescriptionContract.methods.accessPrescription(prescription.prescriptionID).call({ from: currentUser });
+
+                        return {
+                            prescriptionData: prescription,
+                            patientData,
+                            physicianData,
+                            pharmacyData,
+                            status: prescriptionData[2],
+                        };
+                    } catch (err) {
+                        console.error(`Failed to fetch data for patient ${prescription.address}:`, err);
+                        return null;
+                    }
+                })
+            );
+
+            setPrescriptions(prev => [...prev, ...prescriptionsData.filter(data => data !== null)]);
+            setError(null);
+            console.log(prescriptionsData.length)
+            setHasMore(prescriptionsData.length === limit); 
+
+        } catch (error) {
+            console.error('Error fetching prescriptions:', error.response ? error.response.data : error);
+            setError('Failed to fetch prescriptions.');
+        }
+    };
 
     const formatDate = (timestamp) => new Date(timestamp).toISOString().split('T')[0];
 
+    const loadMore = () => {
+        if (!hasMore) return;
+        setOffset(prev => prev + limit);
+        fetchPrescriptions(role, currentUser);
+    };
+
     return (
-        <div className="container p-3 bgcolor2">
-            {loading && <p>Loading...</p>}
-            {error && <p className="text-danger">Error: {error}</p>}
-            {!loading && !error && 
-                <>
-                    <h4 className="mb-3">{iconMap[role]} {role} Dashboard</h4>
-                    <h5 className=''>MY ACTIVE PRESCRIPTIONS</h5>
+        <div>
+            {loading && (
+                <div style={{ textAlign: 'center', padding: '20px' }}>
+                    <p>Loading...</p>
+                </div>
+            )}
+            {error && (
+                <div style={{ textAlign: 'center', color: 'red', padding: '20px' }}>
+                    <p>Error: {error}</p>
+                </div>
+            )}
+            {role && (
+                <div>
                     <table className="table table-striped shadow" style={{borderRadius:'0.75rem', overflow:'hidden'}}>
                         <thead>
                             <tr className='text-center'>
@@ -177,8 +172,7 @@ const Home = () => {
                                     <tr key={index} className="text-center" style={{verticalAlign:'middle'}}>
                                         <td className='p-1'>
                                             <div className=''>{formatDate(prescription.prescriptionData.date)}</div>
-                                            <QRCodeSVG value={prescription.prescriptionData.prescriptionID} size={80} />
-                                            <div className='mt-1' style={{ fontSize: 8 }}>{prescription.prescriptionData.prescriptionID}</div>
+                                            <div className='mt-1' style={{ fontSize: 12 }}>{prescription.prescriptionData.prescriptionID}</div>
                                         </td>
                                         {role != 'Patient' &&
                                             <td className='border-start'>
@@ -186,7 +180,6 @@ const Home = () => {
                                                     <div className='m-0 p-0'>{prescription.patientData.name}</div>
                                                     <div>{prescription.patientData.nhiNumber}</div>
                                                     <div style={{fontSize:14}}>Phone: {prescription.patientData.contactNumber}</div>
-                                                    {/* <div style={{ fontSize: 10 }}>{prescription.patientData.address}</div> */}
                                                 </div>
                                             </td>
                                         }
@@ -222,7 +215,6 @@ const Home = () => {
                                                 to={`/access-prescription/${prescription.prescriptionData.prescriptionID}`}
                                             >
                                                 <i className="bi bi-prescription" style={{fontSize:28}}></i>
-                                                <div style={{fontSize:10}}>View Pescription Details</div>
                                             </Link>
                                         </td>
                                     </tr>
@@ -230,22 +222,19 @@ const Home = () => {
 
                             ):(
                                 <tr>
-                                    <td colSpan="6" className="text-center">No active prescriptions found.</td>
+                                    <td colSpan="6" className="text-center">No previous prescriptions found.</td>
                                 </tr>
                             )
                             }
                         </tbody>
                     </table>
-                    <div className='mt-3'>
-                        <h6>PREVIOUS PRESCRIPTIONS</h6>
-                        <div>
-                            <HomeDetails />
-                        </div>
-                    </div>
-                </>
-            }
+                    {hasMore && (
+                        <button className='btn btn-sm btn-dark' onClick={loadMore}><i class="bi bi-cloud-download"></i> Load More</button>
+                    )}
+                </div>
+            )}
         </div>
     );
-}
- 
-export default Home;
+};
+
+export default HomeDetails;

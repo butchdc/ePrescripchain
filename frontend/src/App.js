@@ -17,6 +17,7 @@ import RegulatoryHome from './views/homes/regulatoryHome';
 import AccessPrescription from './views/forms/accessprescription';
 import { getUserRoleAndAttributes } from './utils/userqueryutils';
 import Home from './views/homes/home';
+import HomeDetails from './views/homes/homedetails';
 
 const App = () => {
   const [role, setRole] = useState(null);
@@ -96,15 +97,15 @@ const App = () => {
       <Routes>
         <Route path="/config" element={<ConfigPage />} />
         <Route path="/sample" element={<Sample />} />
+        <Route path="/about" element={<About />} />
+        <Route path='/details' element={<HomeDetails />} />
         <Route
           path="*"
           element={
             <ErrorBoundary error={error}>
               <Routes>
-                <Route path="/about" element={<About />} />
                 {role === 'Administrator' && (
                   <>
-                    <Route path="/" element={<About />} /> 
                     <Route path="/register-regulatory-authority" element={<RegulatoryAuthorityRegistration />} />
                     <Route path="/query-page" element={<QueryPage />} />
                     <Route path="/ipfs-query" element={<DownloadFromIPFS />} />
